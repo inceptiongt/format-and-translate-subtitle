@@ -138,16 +138,14 @@ ${BUN_X} {baseDir}/scripts/step4.ts <debug_dir>/3.en.formatted.json "" <debug_di
 调用 `baoyu-translate` skill，参数：
 - 源文件：`<debug_dir>/4.en.formatted.indexed.md`
 - 目标语言：`zh-CN`
+- --mode 等其他参数，严格参照 EXTEND.md 文件。
 - 输出文件：`<debug_dir>/5.en.formatted.indexed.zh.md`
-- mode等其他参数，严格参照 EXTEND.md 文件。
 
 **额外要求（必须在调用时明确指定）**：
-1. 保持序号一一对应：`[N]` 英文 ↔ `[N]` 中文，不合并不拆分行
+1. 保持序号一一对应：`[N]` 英文 ↔ `[N]` 中文，不合并不拆分行；使用 `grep -c '^\[\d\+\]' file.md` 验证行数一致。
 2. 保留所有 `[数字]` 序号前缀
 3. 翻译 `# 章节标题` 行
 4. 输出格式与输入完全一致
-
-**文件较大时**：使用 `baoyu-translate` 内置分块机制（chunk threshold 4000 words），并行翻译后合并。
 
 **输出**：`<debug_dir>/5.en.formatted.indexed.zh.md`
 
@@ -162,11 +160,12 @@ ${BUN_X} {baseDir}/scripts/step4.ts <debug_dir>/3.en.formatted.json "" <debug_di
 2. 利用 Step 5 中 baoyu-translate 产生的 chunk 文件（位于 `<debug_dir>/5.en.formatted.indexed.zh.md-chunks/` 或 baoyu-translate 实际输出目录）：
    - 英文 chunks：`chunks/chunk-NN.md`
    - 中文 chunks：`chunk-NN-draft.md`
-3. 对每对 chunk **并行**启动子 agent，每个 agent：
-   - 读取提示词
-   - 读取对应英文 chunk 和中文 chunk
-   - 按提示词进行分句对齐，输出到 `<debug_dir>/step6_chunks/chunk-NN-segmented.md`
-4. 等待全部完成后，按顺序合并为 `<debug_dir>/6.en.formatted.indexed.zh.segmention.md`
+   3.1 对每对 chunk **并行**启动子 agent，每个 agent：
+      - 读取提示词
+      - 读取对应英文 chunk 和中文 chunk
+      - 按提示词进行分句对齐，输出到 `<debug_dir>/step6_chunks/chunk-NN-segmented.md`
+   3.2 等待全部完成后，按顺序合并为 `<debug_dir>/6.en.formatted.indexed.zh.segmention.md`
+2. 如果 Step 5 没有分块输出，则使用 `<debug_dir>/5.en.formatted.indexed.zh.md` 作为整体输入。
 
 **关键规则（来自提示词）**：
 - 英文长句拆分为子句（每子句 < 20 词），标注 `[n.1]`, `[n.2]`...
@@ -193,7 +192,17 @@ ${BUN_X} {baseDir}/scripts/step7.ts <debug_dir>/3.en.formatted.json <debug_dir>/
 
 ## 完成汇报
 
-所有步骤执行完毕后，输出摘要：
+所有步骤执行完毕后，统计数量，输出摘要。
+
+统计 md 文件内容的数量，包括行数、字数：
+-  行数，通过 `grep -c '^\[\d\+\.\?\d\?\]' file.md` 统计。
+-  字数，内容为英文的，通过 `wc -w file.md` 统计；内容为中文的（文件名 .zh.md 后缀），通过 `wc -m file.md` 统计。
+
+zh.segmention.md 文件只统计行数，不统计字数。
+
+统计 srt 文件的字幕数量（即字幕块数量），通过 `grep -c '^\d\+$' file.srt` 统计。
+
+json 文件不统计
 
 ```
 ✅ format_and_translate 完成
@@ -202,13 +211,13 @@ ${BUN_X} {baseDir}/scripts/step7.ts <debug_dir>/3.en.formatted.json <debug_dir>/
 输出：<debug_dir>/7.final.srt
 
 中间文件：
-  Step 1 → <debug_dir>/1.en.indexed.md + 1.en.indexed.json
-  Step 2 → <debug_dir>/2.en.indexed.flag.md
+  Step 1 → <debug_dir>/1.en.indexed.md + 1.en.indexed.json ，数量：行数：...行；英文词数：...词
+  Step 2 → <debug_dir>/2.en.indexed.flag.md ，数量：行数：...行；英文词数：...词
   Step 3 → <debug_dir>/3.en.formatted.json
-  Step 4 → <debug_dir>/4.en.formatted.indexed.md
-  Step 5 → <debug_dir>/5.en.formatted.indexed.zh.md
-  Step 6 → <debug_dir>/6.en.formatted.indexed.zh.segmention.md
-  Step 7 → <debug_dir>/7.final.srt
+  Step 4 → <debug_dir>/4.en.formatted.indexed.md ，数量：行数：...行；英文词数：...词
+  Step 5 → <debug_dir>/5.en.formatted.indexed.zh.md ，数量：行数：...行；中文字数：...字
+  Step 6 → <debug_dir>/6.en.formatted.indexed.zh.segmention.md ，数量：行数：...行；
+  Step 7 → <debug_dir>/7.final.srt ，数量：字幕块数：...块
 ```
 
 ---
