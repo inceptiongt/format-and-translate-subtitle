@@ -142,7 +142,7 @@ ${BUN_X} {baseDir}/scripts/step4.ts <debug_dir>/3.en.formatted.json "" <debug_di
 - 输出文件：`<debug_dir>/5.en.formatted.indexed.zh.md`
 
 **额外要求（必须在调用时明确指定）**：
-1. 保持序号一一对应：`[N]` 英文 ↔ `[N]` 中文，不合并不拆分行；使用 `grep -c '^\[\d\+\]' file.md` **验证 行数 是否一致**。
+1. 保持序号一一对应：`[N]` 英文 ↔ `[N]` 中文，不合并不拆分行；使用 `grep -c '^\[\d\+\.\?\d\?\]' file.md` **验证 行数 是否一致**。
 2. 保留所有 `[数字]` 序号前缀
 3. 翻译 `# 章节标题` 行
 4. 输出格式与输入完全一致
@@ -173,7 +173,7 @@ ${BUN_X} {baseDir}/scripts/step4.ts <debug_dir>/3.en.formatted.json "" <debug_di
 - 两个英文子句对应一个中文子句时，补 `[n.m] [copy]`
 - 格式：英文块 + 中文块
 - **禁止**跨 `[n]` 合并，**禁止**重新翻译
-- 使用 `grep -c '^\[\d\+\]' file.md` **验证 行数 是否一致**。
+- 使用 `grep -c '^\[\d\+\.\?\d\?\]' file.md` **验证 行数 是否一致**。
 
 ---
 
