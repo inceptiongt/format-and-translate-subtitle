@@ -142,7 +142,7 @@ ${BUN_X} {baseDir}/scripts/step4.ts <debug_dir>/3.en.formatted.json "" <debug_di
 - 输出文件：`<debug_dir>/5.en.formatted.indexed.zh.md`
 
 **额外要求（必须在调用时明确指定）**：
-1. 保持序号一一对应：`[N]` 英文 ↔ `[N]` 中文，不合并不拆分行；使用 `grep -c '^\[\d\+\]' file.md` 验证行数一致。
+1. 保持序号一一对应：`[N]` 英文 ↔ `[N]` 中文，不合并不拆分行；使用 `grep -c '^\[\d\+\]' file.md` **验证 行数 是否一致**。
 2. 保留所有 `[数字]` 序号前缀
 3. 翻译 `# 章节标题` 行
 4. 输出格式与输入完全一致
@@ -160,12 +160,12 @@ ${BUN_X} {baseDir}/scripts/step4.ts <debug_dir>/3.en.formatted.json "" <debug_di
 2. 利用 Step 5 中 baoyu-translate 产生的 chunk 文件（位于 `<debug_dir>/5.en.formatted.indexed.zh.md-chunks/` 或 baoyu-translate 实际输出目录）：
    - 英文 chunks：`chunks/chunk-NN.md`
    - 中文 chunks：`chunk-NN-draft.md`
-   3.1 对每对 chunk **并行**启动子 agent，每个 agent：
+   2.1 对每对 chunk **并行**启动子 agent，每个 agent：
       - 读取提示词
       - 读取对应英文 chunk 和中文 chunk
       - 按提示词进行分句对齐，输出到 `<debug_dir>/step6_chunks/chunk-NN-segmented.md`
-   3.2 等待全部完成后，按顺序合并为 `<debug_dir>/6.en.formatted.indexed.zh.segmention.md`
-2. 如果 Step 5 没有分块输出，则使用 `<debug_dir>/5.en.formatted.indexed.zh.md` 作为整体输入。
+   2.2 等待全部完成后，按顺序合并为 `<debug_dir>/6.en.formatted.indexed.zh.segmention.md`
+3. 如果 Step 5 没有分块输出，则使用 `<debug_dir>/5.en.formatted.indexed.zh.md` 作为整体输入。
 
 **关键规则（来自提示词）**：
 - 英文长句拆分为子句（每子句 < 20 词），标注 `[n.1]`, `[n.2]`...
@@ -173,6 +173,7 @@ ${BUN_X} {baseDir}/scripts/step4.ts <debug_dir>/3.en.formatted.json "" <debug_di
 - 两个英文子句对应一个中文子句时，补 `[n.m] [copy]`
 - 格式：英文块 + 中文块
 - **禁止**跨 `[n]` 合并，**禁止**重新翻译
+- 使用 `grep -c '^\[\d\+\]' file.md` **验证 行数 是否一致**。
 
 ---
 
