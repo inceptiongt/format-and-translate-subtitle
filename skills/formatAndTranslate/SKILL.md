@@ -193,7 +193,7 @@ ${BUN_X} {baseDir}/scripts/step7.ts <debug_dir>/3.en.formatted.json <debug_dir>/
 
 ## 完成汇报
 
-所有步骤执行完毕后，统计数量，输出摘要。
+所有步骤执行完毕后，统计数量:
 
 统计 md 文件内容的数量，包括行数、字数：
 -  行数，通过 `grep -c '^\[\d\+\.\?\d\?\]' file.md` 统计。
@@ -204,6 +204,8 @@ zh.segmention.md 文件只统计行数，不统计字数。
 统计 srt 文件的字幕数量（即字幕块数量），通过 `grep -c '^\d\+$' file.srt` 统计。
 
 json 文件不统计
+
+输出，并保存摘要为 `<debug_dir>/statistics.md`:
 
 ```
 ✅ format_and_translate 完成
