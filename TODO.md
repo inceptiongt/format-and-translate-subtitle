@@ -442,3 +442,15 @@ en.formatted.indexed.md
 - 调用 LLM 是要不要进行分 chunk，哪次调用需要分 chunk？
 - 什么时候把chapter 信息整合进 **.index.md 文件中？要不要整合？
 - 没有 chapters 怎么处理？
+
+# todo
+
+- 修改文件夹名为：Subtitle
+
+## 节省 Token
+- 减小输出：
+  - step two
+  - step six
+- 利用 cache：
+  - step five 的 input 与 step six 的 input 部分是一样的。
+  - sub-agent 与 主 agent 好像不能命中缓存？
