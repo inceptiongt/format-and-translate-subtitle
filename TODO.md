@@ -454,3 +454,5 @@ en.formatted.indexed.md
 - 利用 cache：
   - step five 的 input 与 step six 的 input 部分是一样的。
   - sub-agent 与 主 agent 好像不能命中缓存？
+
+- 没利用 refine 后的翻译，而是使用了分 chunk 的翻译。

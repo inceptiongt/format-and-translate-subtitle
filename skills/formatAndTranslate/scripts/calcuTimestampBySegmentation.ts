@@ -12,40 +12,116 @@ export interface FormattedSubtitleItem {
   segs: { utf8: string }[];
 }
 
+export interface SplitPoint {
+  before: string;
+  after: string | null;
+}
+
+export interface SplitDescriptor {
+  enSplits: SplitPoint[];
+  zhSplits: SplitPoint[];
+  zhCopyCount: number;
+}
+
+function escapeRegex(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+export function applySplits(text: string, splits: SplitPoint[]): string[] {
+  if (splits.length === 0) return [text.trim()];
+
+  const parts: string[] = [];
+  let remaining = text;
+
+  for (const { before, after } of splits) {
+    const regex = after
+      ? new RegExp(`(${escapeRegex(before)})(\\s*)(${escapeRegex(after)})`)
+      : new RegExp(`(${escapeRegex(before)})\\s*$`);
+
+    const match = regex.exec(remaining);
+    if (!match) continue;
+
+    const leftEnd = match.index + match[1].length;
+    const rightStart = after ? leftEnd + match[2].length : remaining.length;
+
+    parts.push(remaining.slice(0, leftEnd).trim());
+    remaining = remaining.slice(rightStart);
+  }
+
+  parts.push(remaining.trim());
+  return parts.filter(p => p.length > 0);
+}
+
+export function parseCompactSplitMd(compactSplitMd: string): Map<number, SplitDescriptor> {
+  const descriptors = new Map<number, SplitDescriptor>();
+
+  for (const line of compactSplitMd.split('\n')) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+
+    const enMatch = trimmed.match(/^\[(\d+)\.(\d+):en\]\s*(.+?)\[segment\](.*)$/);
+    if (enMatch) {
+      const n = parseInt(enMatch[1], 10);
+      if (!descriptors.has(n)) descriptors.set(n, { enSplits: [], zhSplits: [], zhCopyCount: 0 });
+      descriptors.get(n)!.enSplits.push({ before: enMatch[3], after: enMatch[4].trim() || null });
+      continue;
+    }
+
+    const zhCopyMatch = trimmed.match(/^\[(\d+)\.(\d+):zh\]\s*\[copy\]$/);
+    if (zhCopyMatch) {
+      const n = parseInt(zhCopyMatch[1], 10);
+      if (!descriptors.has(n)) descriptors.set(n, { enSplits: [], zhSplits: [], zhCopyCount: 0 });
+      descriptors.get(n)!.zhCopyCount += 1;
+      continue;
+    }
+
+    const zhMatch = trimmed.match(/^\[(\d+)\.(\d+):zh\]\s*(.+?)\[segment\](.*)$/);
+    if (zhMatch) {
+      const n = parseInt(zhMatch[1], 10);
+      if (!descriptors.has(n)) descriptors.set(n, { enSplits: [], zhSplits: [], zhCopyCount: 0 });
+      descriptors.get(n)!.zhSplits.push({ before: zhMatch[3], after: zhMatch[4].trim() || null });
+    }
+  }
+
+  return descriptors;
+}
+
 export function calcuTimestampBySegmentation(
   formattedJson: FormattedSubtitleItem[],
-  segmentationsMd: string
+  compactSplitMd: string,
+  zhLines: Map<number, string>
 ): SegmentResult[] {
-  const lines = segmentationsMd.split('\n');
-  const parentGroups = new Map<number, Map<number, { original?: string; translation?: string }>>();
-  const segmentRegex = /^\[(\d+)\.(\d+)\]\s*(.*)$/;
+  const splitDescriptors = parseCompactSplitMd(compactSplitMd);
 
-  lines.forEach(line => {
-    const trimmed = line.trim();
-    if (!trimmed) return;
+  const parentGroups = new Map<number, Map<number, { original: string; translation: string }>>();
 
-    const match = trimmed.match(segmentRegex);
-    if (match) {
-      const n = parseInt(match[1], 10);
-      const m = parseInt(match[2], 10);
-      const text = match[3];
+  formattedJson.forEach((item, n) => {
+    const enText = item.segs.map(s => s.utf8).join('');
+    const zhText = zhLines.get(n) ?? '';
+    const desc = splitDescriptors.get(n);
 
-      if (!parentGroups.has(n)) {
-        parentGroups.set(n, new Map());
-      }
-      const mDataMap = parentGroups.get(n)!;
+    const enParts = (desc && desc.enSplits.length > 0)
+      ? applySplits(enText, desc.enSplits)
+      : [enText.trim()];
 
-      if (!mDataMap.has(m)) {
-        mDataMap.set(m, { original: text });
-      } else {
-        const existing = mDataMap.get(m)!;
-        if (existing.translation === undefined) {
-          existing.translation = text;
-        } else {
-          existing.translation = text;
-        }
-      }
+    let zhParts: string[];
+    if (desc && (desc.zhSplits.length > 0 || desc.zhCopyCount > 0)) {
+      zhParts = applySplits(zhText, desc.zhSplits);
+      for (let i = 0; i < desc.zhCopyCount; i++) zhParts.push('[copy]');
+    } else {
+      zhParts = [zhText.trim()];
     }
+
+    const mDataMap = new Map<number, { original: string; translation: string }>();
+    const count = Math.max(enParts.length, zhParts.length);
+    for (let m = 1; m <= count; m++) {
+      mDataMap.set(m, {
+        original: enParts[m - 1] ?? '',
+        translation: zhParts[m - 1] ?? '[copy]',
+      });
+    }
+
+    parentGroups.set(n, mDataMap);
   });
 
   const results: SegmentResult[] = [];
@@ -65,9 +141,9 @@ export function calcuTimestampBySegmentation(
       const data = mDataMap.get(m)!;
       return {
         m,
-        original: data.original || '',
-        translation: data.translation || '',
-        length: (data.original || '').length || 1,
+        original: data.original,
+        translation: data.translation,
+        length: data.original.length || 1,
       };
     });
 

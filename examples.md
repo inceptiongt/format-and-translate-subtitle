@@ -80,19 +80,17 @@ Concrete input/output examples for each step of the pipeline.
 
 ### Step 2 Output: `2.en.indexed.flag.md`
 
-LLM adds `[end]` markers and punctuation at sentence boundaries. Line indices and original text are never modified.
+LLM outputs **only** lines that have sentence boundaries — one line per `[end]` marker, with one token of context before and after. Lines without a boundary are omitted entirely.
 
 ```
-[0] Hey Starship Addicts my name is ZacK Golden and welcome to another CSI Starbase Deep Dive
-[1] Investigation.[end] We have a lot to cover today so I'm going to attempt to get into this as quickly as
-[2] possible.[end] all of you - uhhh returning viewers - go ahead and take this time to throw a bag of popcorn
-[3] in the microwave because this is that episode I've been warning you about for the last two months and
-[4] it's going to get a little intense.[end] For everyone else, if this is your first time clicking on a
-[5] CSI Starbase thumbnail...[end] Then Hello, and welcome to the channel. Thanks for giving us a chance![end]
-[6] I don't usually do this but because of the length of this episode I feel like I should
+[1] Investigation.[end]We
+[2] possible.[end]all
+[4] intense.[end]For
+[5] thumbnail...[end]Then
+[5] chance![end]
 ```
 
-> **Merging rule**: `[1]` contains `Investigation.[end]` — only 1 word, so it merges forward into the next sentence ("Investigation. We have a lot to cover..."). Line `[5]` has two `[end]` markers creating two valid sentences.
+> The code in `calcuTimestampByFlag.ts` reconstructs the full flagged text by applying these markers to the original JSON source (`1.en.indexed.json`), then runs the timestamp-distribution logic unchanged. Line `[5]` has two entries (two boundaries). `Investigation.[end]` at line `[1]` produces only 1 word in that segment, so it merges forward per the 10-word rule.
 
 ---
 
@@ -287,25 +285,23 @@ Items where `segs` contains multiple entries with `tOffsetMs` (word-level timing
 
 ### Step 6 Output: `6.en.formatted.indexed.zh.segmention.md` (excerpt)
 
-English sentence split into two sub-clauses; Chinese mirrors the split:
+LLM outputs **only** split-point descriptors — one line per split boundary, with one-token context. Lines that need no split are omitted.
+
+English sentence `[1]` splits between `attempt` and `to`; Chinese splits between `会` and `尽`:
 
 ```
-[1.1] We have a lot to cover today so I'm going to attempt
-[1.2] to get into this as quickly as possible.
-
-[1.1] 我们今天有很多内容要讲，所以我会
-[1.2] 尽快进入正题。
+[1:en] attempt[split]to
+[1:zh] 会[split]尽
 ```
 
 `[copy]` example — two English sub-clauses share one Chinese rendering:
 
 ```
-[5.1] CSI Starbase thumbnail...
-[5.2] Then Hello, and welcome to the channel.
-
-[5.1] CSI 星际基地缩略图……然后你好，欢迎来到频道。
-[5.2] [copy]
+[5:en] thumbnail...[split]Then
+[5:zh] [copy]
 ```
+
+> The code in `calcuTimestampBySegmentation.ts` reconstructs sub-clauses by applying these split points to the English text in `3.en.formatted.json` and the Chinese text in `5.en.formatted.indexed.zh.md`.
 
 ---
 

@@ -6,6 +6,53 @@ export interface FormattedSubtitleItem {
   segs: { utf8: string }[];
 }
 
+function escapeRegex(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+export function expandCompactFlags(originalItems: SubtitleItem[], compactFlagMd: string): string {
+  const lineFlags = new Map<number, Array<{ before: string; after: string | null }>>();
+
+  for (const line of compactFlagMd.split('\n')) {
+    const match = line.match(/^\[(\d+)\]\s*(.+?)\[end\](.*)$/);
+    if (!match) continue;
+    const idx = parseInt(match[1], 10);
+    const before = match[2];
+    const after = match[3].trim() || null;
+    if (!lineFlags.has(idx)) lineFlags.set(idx, []);
+    lineFlags.get(idx)!.push({ before, after });
+  }
+
+  const resultLines: string[] = [];
+  for (let i = 0; i < originalItems.length; i++) {
+    const item = originalItems[i];
+    if (!item) continue;
+    const text = item.segs.map(s => s.utf8).join('');
+    const flags = lineFlags.get(i);
+
+    if (!flags || flags.length === 0) {
+      resultLines.push(`[${i}] ${text}`);
+      continue;
+    }
+
+    let flaggedText = text;
+    for (const { before, after } of flags) {
+      // Try exact match first; if it fails, strip trailing punctuation added by LLM
+      const candidates = [before, before.replace(/[.!?,;…]+$/, '')];
+      for (const b of candidates) {
+        const pattern = after
+          ? new RegExp(`(${escapeRegex(b)})(\\s*)(${escapeRegex(after)})`)
+          : new RegExp(`(${escapeRegex(b)})\\s*$`);
+        const next = flaggedText.replace(pattern, after ? '$1[end]$2$3' : '$1[end]');
+        if (next !== flaggedText) { flaggedText = next; break; }
+      }
+    }
+    resultLines.push(`[${i}] ${flaggedText}`);
+  }
+
+  return resultLines.join('\n');
+}
+
 function joinText(a: string, b: string): string {
   if (!a) return b;
   if (!b) return a;
@@ -53,6 +100,7 @@ export function calcuTimestampByFlag(
   originalItems: SubtitleItem[],
   flaggedMd: string
 ): FormattedSubtitleItem[] {
+  const expandedMd = expandCompactFlags(originalItems, flaggedMd);
   const results: FormattedSubtitleItem[] = [];
 
   let accText = '';
@@ -60,7 +108,7 @@ export function calcuTimestampByFlag(
   let accDuration = 0;
   let accLineIndex: number | null = null;
 
-  for (const line of flaggedMd.split('\n')) {
+  for (const line of expandedMd.split('\n')) {
     const match = line.match(/^\[(\d+)\]\s*(.*)$/);
     if (!match) continue;
 
