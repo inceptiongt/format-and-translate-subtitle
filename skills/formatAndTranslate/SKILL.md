@@ -86,9 +86,8 @@ ${BUN_X} {baseDir}/scripts/step1.ts <en_json_path> <debug_dir>
 4. 等待全部完成后，按顺序合并为 `<debug_dir>/2.en.indexed.flag.md`
 5. （Debug）展开完整文本：
    ```bash
-   ${BUN_X} {baseDir}/scripts/expandFlagFull.ts <debug_dir>/1.en.indexed.json <debug_dir>/2.en.indexed.flag.md <debug_dir>/2.en.indexed.flag.full.md
-   ```
-**输出**：
+   ${BUN_X} {baseDir}/scripts/runExpandFlagFull.ts <debug_dir>/1.en.indexed.json <debug_dir>/2.en.indexed.flag.md <debug_dir>/2.en.indexed.flag.full.md
+   ```**输出**：
 `<debug_dir>/2.en.indexed.flag.md`
 `<debug_dir>/2.en.indexed.flag.full.md`（含 `[end]` 标记的完整原文，仅供 debug）
 
@@ -180,9 +179,8 @@ ${BUN_X} {baseDir}/scripts/step4.ts <debug_dir>/3.en.formatted.json "" <debug_di
       - 输出到 `<debug_dir>/step6_chunks/chunk-01-segmented.md`，合并为 `<debug_dir>/6.en.formatted.indexed.zh.segmention.md`
 3. （Debug）展开完整双语对照文本：
    ```bash
-   ${BUN_X} {baseDir}/scripts/expandSegmentFull.ts <debug_dir>/3.en.formatted.json <debug_dir>/5.en.formatted.indexed.zh.md <debug_dir>/6.en.formatted.indexed.zh.segmention.md <debug_dir>/6.en.formatted.indexed.zh.segmention.full.md
+   ${BUN_X} {baseDir}/scripts/runExpandSegmentFull.ts <debug_dir>/3.en.formatted.json <debug_dir>/5.en.formatted.indexed.zh.md <debug_dir>/6.en.formatted.indexed.zh.segmention.md <debug_dir>/6.en.formatted.indexed.zh.segmention.full.md
    ```
-
 **输出**：
 `<debug_dir>/6.en.formatted.indexed.zh.segmention.md`
 `<debug_dir>/6.en.formatted.indexed.zh.segmention.full.md`
@@ -205,7 +203,7 @@ ${BUN_X} {baseDir}/scripts/step7.ts <debug_dir>/3.en.formatted.json <debug_dir>/
 
 ## 完成汇报
 
-所有步骤执行完毕后，统计数量:
+**所有步骤执行完毕后，统计数量**:
 
 统计 md 文件内容的数量，包括行数、字数：
 -  行数，通过 `grep -c '^\[\d\+\.\?\d\?\]' file.md` 统计。
@@ -217,22 +215,32 @@ zh.segmention.md 文件只统计行数，不统计字数。
 
 json 文件不统计
 
-输出，并保存摘要为 `<debug_dir>/statistics.md`:
+**计算额外信息**
+`<about_end_flag>` = 有效 flag / 全部 flag: `grep -c '\[end\]' <debug_dir>/2.en.indexed.flag.full.md` / `grep -c '\[end\]' <debug_dir>/2.en.indexed.flag.md`
 
-```
-✅ format_and_translate 完成
+`<about_segment_flag>` = 有效 flag / 全部 flag: `grep -c '^\[.*\]' <debug_dir>/6.en.formatted.indexed.zh.segmention.full.md` / `grep -c '^\[.*\]\s$' <debug_dir>/6.en.formatted.indexed.zh.segmention.full.md`
 
-输入：<en_json_path>
-输出：<debug_dir>/7.final.srt
 
-中间文件：
-  Step 1 -> <debug_dir>/1.en.indexed.md + 1.en.indexed.json ，数量：行数：...行；英文词数：...词
-  Step 2 -> <debug_dir>/2.en.indexed.flag.md ，数量：行数：...行；英文词数：...词 + 2.en.indexed.flag.full.md（debug）
-  Step 3 -> <debug_dir>/3.en.formatted.json
-  Step 4 -> <debug_dir>/4.en.formatted.indexed.md ，数量：行数：...行；英文词数：...词
-  Step 5 -> <debug_dir>/5.en.formatted.indexed.zh.md ，数量：行数：...行；中文字数：...字
-  Step 6 -> <debug_dir>/6.en.formatted.indexed.zh.segmention.md ，数量：行数：...行；+ 6.en.formatted.indexed.zh.segmention.full.md（debug）
-  Step 7 -> <debug_dir>/7.final.srt ，数量：字幕块数：...块
+**输出**
+
+保存摘要为 `<debug_dir>/statistics.md`:
+
+```markdown
+✅ format_and_translate 完成！
+
+**输入**：`<en_json_path>`
+
+**输出**：`<debug_dir>/7.final.srt`
+
+| 步骤 | 输出文件 | 统计信息 | 备注 |
+| :--- | :--- | :--- | :--- |
+| **Step 1** | `1.en.indexed.md`<br>`1.en.indexed.json` | **行数**: ...<br>**英文词数**: ... | - |
+| **Step 2** | `2.en.indexed.flag.md`<br>`2.en.indexed.flag.full.md` | **行数**: ...<br>**英文词数**: ... | `<about_end_flag>` |
+| **Step 3** | `3.en.formatted.json` | - | - |
+| **Step 4** | `4.en.formatted.indexed.md` | **行数**: ...<br>**英文词数**: ... | - |
+| **Step 5** | `5.en.formatted.indexed.zh.md` | **行数**: ...<br>**中文字数**: ... | - |
+| **Step 6** | `6.en.formatted.indexed.zh.segmention.md`<br>`6.en.formatted.indexed.zh.segmention.full.md`| **行数**: ... | `<about_segment_flag>` |
+| **Step 7** | `7.final.srt` | **字幕块数**: ... | 最终双语字幕 |
 ```
 
 ---

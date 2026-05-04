@@ -446,6 +446,8 @@ en.formatted.indexed.md
 # todo
 
 - 修改文件夹名为：Subtitle
+- 没利用 refine 后的翻译，而是使用了分 chunk 的翻译。
+- 评价 LLM 打 flag 结果的质量。
 
 ## 节省 Token
 - 减小输出：
@@ -455,4 +457,4 @@ en.formatted.indexed.md
   - step five 的 input 与 step six 的 input 部分是一样的。
   - sub-agent 与 主 agent 好像不能命中缓存？
 
-- 没利用 refine 后的翻译，而是使用了分 chunk 的翻译。
+

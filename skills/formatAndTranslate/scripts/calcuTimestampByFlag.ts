@@ -40,10 +40,15 @@ export function expandCompactFlags(originalItems: SubtitleItem[], compactFlagMd:
       // Try exact match first; if it fails, strip trailing punctuation added by LLM
       const candidates = [before, before.replace(/[.!?,;…]+$/, '')];
       for (const b of candidates) {
-        const pattern = after
-          ? new RegExp(`(${escapeRegex(b)})(\\s*)(${escapeRegex(after)})`)
-          : new RegExp(`(${escapeRegex(b)})\\s*$`);
-        const next = flaggedText.replace(pattern, after ? '$1[end]$2$3' : '$1[end]');
+        let next = flaggedText;
+        if (after) {
+          const pattern = new RegExp(`(${escapeRegex(b)})(\\s*)(${escapeRegex(after)})`);
+          next = flaggedText.replace(pattern, '$1[end]$2$3');
+        }
+        if (next === flaggedText) {
+          const patternEnd = new RegExp(`(${escapeRegex(b)})\\s*$`);
+          next = flaggedText.replace(patternEnd, '$1[end]');
+        }
         if (next !== flaggedText) { flaggedText = next; break; }
       }
     }

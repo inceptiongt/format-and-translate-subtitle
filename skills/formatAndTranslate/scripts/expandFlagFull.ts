@@ -1,14 +1,9 @@
-import { readFileSync, writeFileSync } from 'node:fs';
 import { expandCompactFlags } from './calcuTimestampByFlag';
 
-const [indexedJsonPath, flagMdPath, outputPath] = process.argv.slice(2);
-if (!indexedJsonPath || !flagMdPath || !outputPath) {
-  console.error('Usage: expandFlagFull.ts <indexed_json> <flag_md> <output_full_md>');
-  process.exit(1);
+/**
+ * Expands compact flag markers into a full Markdown string for debugging.
+ * This is a pure function with no side effects.
+ */
+export function expandFlagFull(items: any[], flagMd: string): string {
+  return expandCompactFlags(items, flagMd);
 }
-
-const items = JSON.parse(readFileSync(indexedJsonPath, 'utf-8'));
-const flagMd = readFileSync(flagMdPath, 'utf-8');
-const fullMd = expandCompactFlags(items, flagMd);
-writeFileSync(outputPath, fullMd);
-console.log('Done:', outputPath);

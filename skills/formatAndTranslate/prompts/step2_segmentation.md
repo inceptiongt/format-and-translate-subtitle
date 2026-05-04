@@ -10,7 +10,7 @@ Given an input text where each line starts with `[n]`, identify where sentences 
 Output **only** the lines that contain sentence boundaries — lines where `[end]` should be inserted. For each sentence-ending position:
 - Output **one line** per boundary
 - Format: `[n] lastToken[end]firstToken`
-  - `[n]` is the line index where the boundary occurs
+  - `[n]` is keep from the line where the boundary occurs
   - `lastToken` is the last word (including any attached punctuation you added, e.g. `Investigation.`) immediately before the boundary
   - `firstToken` is the first word of the next sentence immediately after the boundary
   - If the boundary falls at the very end of a line: `[n] lastToken[end]` (no firstToken)
