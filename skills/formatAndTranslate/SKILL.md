@@ -1,5 +1,5 @@
 ---
-name: format_and_translate
+name: format-and-translate
 description: 将 YouTube 字幕 JSON 转换为双语（英文 + 中文）SRT 文件，执行完整 7 步工作流。用法: /format_and_translate <en_json_path> [info_json_path] [--steps 1-7] [--debug-dir <dir>]
 version: 1.0.0
 metadata:
