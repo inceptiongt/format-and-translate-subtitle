@@ -1,6 +1,6 @@
 ---
 name: format-and-translate
-description: "将 YouTube 字幕 JSON 转换为双语（英文 + 中文）SRT 文件，执行完整 7 步工作流。用法: /format_and_translate <en_json_path> [info_json_path] [--steps 1-7] [--debug-dir <dir>]"
+description: "将 YouTube 字幕 JSON 转换为双语（英文 + 中文）SRT 文件，执行完整 7 步工作流。用法: /format-and-translate <en_json_path> [info_json_path] [--steps 1-7] [--debug-dir <dir>]"
 version: 1.0.0
 metadata:
   openclaw:
@@ -9,27 +9,27 @@ metadata:
         - bun
 ---
 
-# format_and_translate
+# format-and-translate
 
 将 YouTube 字幕 JSON 转换为双语（英文 + 中文）SRT 文件，执行完整 7 步工作流。
 
 ## 用法
 
 ```
-/format_and_translate <en_json_path> [info_json_path] [--steps 1-7] [--debug-dir <dir>]
+/format-and-translate <en_json_path> [info_json_path] [--steps 1-7] [--debug-dir <dir>]
 ```
 
 **参数说明：**
 - `en_json_path`：YouTube json3 格式的英文字幕文件路径（必填）
 - `info_json_path`：包含 chapters 信息的 JSON 文件路径（可选，无则跳过章节标题）
 - `--steps`：指定执行哪些步骤，格式 `1-7`（默认全部）。可指定范围如 `3-7`，或单步如 `5`
-- `--debug-dir`：中间文件输出目录（默认为 `<en_json_dir>/<prefix>`，其中 `en_json_dir` 为 `en_json_path` 所在文件夹，`prefix` 为文件名按空格/下划线分词后取前 5 个词再加 `...`）
+- `--debug-dir`：中间文件输出目录（默认为 `<en_json_dir>/Subtitle`）
 
 **示例：**
 ```
-/format_and_translate example/video.en.json3 example/video.info.json
-/format_and_translate example/video.en.json3 --steps 5-7
-/format_and_translate /absolute/path/to/video.en.json3 --debug-dir /tmp/output/
+/format-and-translate example/video.en.json3 example/video.info.json
+/format-and-translate example/video.en.json3 --steps 5-7
+/format-and-translate /absolute/path/to/video.en.json3 --debug-dir /tmp/output/
 ```
 
 ---
@@ -38,7 +38,7 @@ metadata:
 
 1. 解析 `$ARGUMENTS`，提取 `en_json_path`、`info_json_path`（可能为空）、`--steps` 范围、`--debug-dir`
 2. 将 `en_json_path` 转为绝对路径；提取其所在目录 `en_json_dir`
-3. 若未指定 `--debug-dir`，则：`debug_dir = <en_json_dir>/<prefix>`（prefix 为文件名去掉目录及扩展名后，按空格/下划线分词，取前 5 个词用空格拼接再加 `...`，例如 `Building a Railway on the...`）
+3. 若未指定 `--debug-dir`，则：`debug_dir = <en_json_dir>/Subtitle`
 4. 验证 `en_json_path` 文件存在
 5. 若未提供 `info_json_path`，则在 `en_json_dir` 下寻找对应的 `info.json`：从 `en_json_path` 文件名去掉 `.en.json` 后缀，加上 `.info.json`（例如 `video.en.json` -> `video.info.json`）；若文件存在则使用，否则设为空字符串 `""`
 6. 确认 `bun` 可用：`bun --version`
@@ -229,7 +229,7 @@ json 文件不统计
 保存摘要为 `<debug_dir>/statistics.md`:
 
 ```markdown
-✅ format_and_translate 完成！
+✅ format-and-translate 完成！
 
 **输入**：`<en_json_path>`
 
