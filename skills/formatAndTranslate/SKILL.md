@@ -84,12 +84,13 @@ ${BUN_X} {baseDir}/scripts/step1.ts <en_json_path> <debug_dir>
    - 读取对应 chunk 文件
    - 输出到 `<debug_dir>/step2_chunks/chunk-NN-flagged.md`
 4. 等待全部完成后，按顺序合并为 `<debug_dir>/2.en.indexed.flag.md`
-5. （Debug）展开完整文本：
+5. 展开完整文本：
    ```bash
    ${BUN_X} {baseDir}/scripts/runExpandFlagFull.ts <debug_dir>/1.en.indexed.json <debug_dir>/2.en.indexed.flag.md <debug_dir>/2.en.indexed.flag.full.md
    ```**输出**：
 `<debug_dir>/2.en.indexed.flag.md`
 `<debug_dir>/2.en.indexed.flag.full.md`（含 `[end]` 标记的完整原文，仅供 debug）
+6. console info: 有效 flag / 全部 flag —— `grep -c '\[end\]' <debug_dir>/2.en.indexed.flag.full.md` / `grep -c '\[end\]' <debug_dir>/2.en.indexed.flag.md`
 
 ---
 
@@ -177,10 +178,12 @@ ${BUN_X} {baseDir}/scripts/step4.ts <debug_dir>/3.en.formatted.json "" <debug_di
       - 英文：`<debug_dir>/4.en.formatted.indexed.md`
       - 中文：`<debug_dir>/5.en.formatted.indexed.zh.md`
       - 输出到 `<debug_dir>/step6_chunks/chunk-01-segmented.md`，合并为 `<debug_dir>/6.en.formatted.indexed.zh.segmention.md`
-3. （Debug）展开完整双语对照文本：
+3. 展开完整双语对照文本：
    ```bash
    ${BUN_X} {baseDir}/scripts/runExpandSegmentFull.ts <debug_dir>/3.en.formatted.json <debug_dir>/5.en.formatted.indexed.zh.md <debug_dir>/6.en.formatted.indexed.zh.segmention.md <debug_dir>/6.en.formatted.indexed.zh.segmention.full.md
    ```
+4. console info: 有效 flag / 全部 flag —— `grep -c '^\[.*\]' <debug_dir>/6.en.formatted.indexed.zh.segmention.full.md` / `grep -c '^\[.*\]\s$' <debug_dir>/6.en.formatted.indexed.zh.segmention.full.md`
+
 **输出**：
 `<debug_dir>/6.en.formatted.indexed.zh.segmention.md`
 `<debug_dir>/6.en.formatted.indexed.zh.segmention.full.md`
