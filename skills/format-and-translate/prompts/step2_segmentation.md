@@ -18,6 +18,7 @@ Output **only** the lines that contain sentence boundaries — lines where `[end
   - `lastToken` is the last word (including any attached punctuation you added, e.g. `Investigation.`) immediately before the boundary
   - `firstToken` is the first word of the next sentence immediately after the boundary
   - If the boundary falls at the very end of a line: `[n] lastToken[end]` (no firstToken)
+- If there are punctuation mark behind `lastToken`, **Keep the punctuation** as well.
 - If a line has **two** boundaries, output **two** separate entries for the same `[n]`
 - **Do not output lines that have no sentence boundaries**
 
