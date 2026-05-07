@@ -7,7 +7,7 @@ Given an input text where each line starts with `[n]`, identify where sentences 
 
 If there are no punctuation marks at the end of the sentence, add the necessary one.
 
-You can generate the **middleware** first And then get the **Output** early, more detial in the example below.
+You can generate the **Intermediate results** first And then get the **Output** early, more detial in the example below.
 
 # Output Format
 
@@ -37,7 +37,7 @@ Output **only** the lines that contain sentence boundaries — lines where `[end
 [5] CSI Starbase thumbnail...Then Hello, and welcome to the channel. Thanks for giving us a chance!
 [6] I don't usually do this but because of the length of this episode I feel like I should
 
-**middleware**
+**Intermediate results**
 [0] Hey Starship Addicts my name is ZacK Golden and welcome to another CSI Starbase Deep Dive
 [1] Investigation.[end] We have a lot to cover today so I'm going to attempt to get into this as quickly as
 [2] possible.[end] all of you - uhhh returning viewers - go ahead and take this time to throw a bag of popcorn

@@ -448,6 +448,7 @@ en.formatted.indexed.md
 - 修改文件夹名为：Subtitle
 - 没利用 refine 后的翻译，而是使用了分 chunk 的翻译。
 - 评价 LLM 打 flag 结果的质量。
+- prompt 中文翻译成英文。
 
 ## 节省 Token
 - 减小输出：
