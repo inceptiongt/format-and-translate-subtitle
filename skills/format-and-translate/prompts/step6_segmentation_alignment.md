@@ -11,20 +11,20 @@ Two files are provided: one in English and one containing the corresponding Chin
 
 ## Step 1: English Semantic Segmentation
 -  **Long Sentence Segmentation**: Split long sentences into multiple segments based on syntactic structure, semantics, and punctuation. For details, refer to the ‘Syntactic Segmentation Points’ section.
--  **Length Control**: Segment length must be **less than 20 words**.
+-  **Length Control**: Segment length must be **less than 15 words**.
 
 ## Step 2: Chinese Semantic Segmentation and Alignment
--  **Long Sentence Segmentation**: The segmentation method is similar to that for English. For sentences with the same index, the number of Chinese segments should be kept as consistent as possible with the number of English segments.
+-  **Long Sentence Segmentation**: The segmentation method and length control is similar to that for English. For sentences with the same index, the number of Chinese segments should be kept as consistent as possible with the number of English segments.
 -  **Semantic Alignment**: Chinese segments should maintain **semantic alignment** with their English segments.
   Note 1: **When Syntactic Order Differs**: When encountering differences in English and Chinese syntactic order (e.g., post-modifiers, post-adverbials, post-complements), **maintain the natural syntactic order of each language**; do not force strict semantic alignment of the segments (see “Example 1” in “Output Examples”).
   Note 2: **Many-to-one alignment of segments**: When, semantically, multiple English segments correspond to a single Chinese segment, the first Chinese segment is output normally, while the remaining Chinese segments are output with the `[copy]` flag (see “Example 2” in “Output Examples”).
 
 ## Step 3: Specify the format for segment output
 Output only information related to the **segmentation points**, not the full segment content. The format is: “[n.m:en] last-word [segment] first-word”, where:
-- `[n.m:en]` refers to the segment index; “n” denotes the sentence index, ‘m’ denotes the segment index (starting from 0), and “en” represents English (zh represents Chinese).
-- “Last-word” refers to the last one or two words of this segment’s content; if punctuation is present, it is retained.
+- `[n.m:en]` refers to the segment index; “n” denotes the sentence index, ‘m’ denotes the segment index, and “en” represents English (zh represents Chinese).
+- “Last-word” refers to the last one or two words of this segment’s content, if punctuation is present, it is retained. The same applies to Chinese.
 - `[segment]` refers to the segmentation flag. The end of a long sentence is also a segmentation point, so `[segment]` must be added.
-- “First-word” refers to the first word of the next segment. If there is no next segment, the “first word” is not retained.
+- “First-word” refers to the first word of the next segment. If there is no next segment, the “first word” is not retained.The same applies to Chinese.
 
 If a long sentence indexed as `[m]` has no segments, this index is skipped and not output.
 

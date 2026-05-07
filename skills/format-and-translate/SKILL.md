@@ -75,9 +75,9 @@ ${BUN_X} {baseDir}/scripts/step1.ts <en_json_path> <debug_dir>
 
 **执行方式**：
 1. 读取提示词：`{baseDir}/prompts/step2_segmentation.md`
-2. 使用 `{baseDir}/scripts/chunk.ts` 对`<debug_dir>/1.en.indexed.md` 进行分块（max-words 3000），输出到 `<debug_dir>/step2_chunks/`：
+2. 使用 `{baseDir}/scripts/chunk.ts` 对`<debug_dir>/1.en.indexed.md` 进行分块（max-words 2000），输出到 `<debug_dir>/step2_chunks/`：
    ```bash
-   ${BUN_X} {baseDir}/scripts/chunk.ts <debug_dir>/1.en.indexed.md --max-words 3000 --output-dir <debug_dir>/step2_chunks
+   ${BUN_X} {baseDir}/scripts/chunk.ts <debug_dir>/1.en.indexed.md --max-words 2000 --output-dir <debug_dir>/step2_chunks
    ```
 3. 对每个 chunk，按提示词处理：根据句意确定 `[end]` 边界位置；对每个 chunk **并行**启动子 agent（subagent），每个 agent：
    - 读取提示词
@@ -156,28 +156,35 @@ ${BUN_X} {baseDir}/scripts/step4.ts <debug_dir>/3.en.formatted.json "" <debug_di
 
 **执行方式**：
 1. 读取提示词：`{baseDir}/prompts/step6_segmentation_alignment.md`
-2. 判断 Step 5 是否产生了 chunks：检查 baoyu-translate 实际输出目录（`<debug_dir>/4.en.formatted.indexed-zh-CN/chunks/chunks/`，或 baoyu-translate 实际输出目录下 `chunks/chunks/`）是否存在 `chunk-NN.md` 文件。
+2. 检查 chunks。判断 Step 5 是否产生了 chunks：检查 baoyu-translate 实际输出目录（`<debug_dir>/4.en.formatted.indexed-zh-CN/chunks/chunks/`，或 baoyu-translate 实际输出目录下 `chunks/chunks/`）是否存在 `chunk-NN.md` 文件。
 
-   **分支 A：有 chunks（文件较长，被分块）**
+   **分支 A：有英文 chunks（利用现有 chunks）**
 
-   2.0 运行以下脚本，将 `5.en.formatted.indexed.zh.md` 按英文 chunk 边界拆分为对应的中文 chunks：
-      ```bash
-      ${BUN_X} {baseDir}/scripts/splitZhByChunks.ts <debug_dir>/5.en.formatted.indexed.zh.md <en_chunks_dir>/chunks <en_chunks_dir>
-      ```
-      其中 `<en_chunks_dir>` 为 baoyu-translate 输出目录下的 `chunks/` 子目录（如 `<debug_dir>/4.en.formatted.indexed-zh-CN/chunks`）。输出：`<en_chunks_dir>/chunk-NN-zh.md`
-   2.1 对每对 chunk **并行**启动子 agent，每个 agent：
+   运行以下脚本，将 `5.en.formatted.indexed.zh.md` 按现有的英文 chunk 边界拆分为对应的中文 chunks：
+   ```bash
+   ${BUN_X} {baseDir}/scripts/splitZhByChunks.ts <debug_dir>/5.en.formatted.indexed.zh.md <en_chunks_dir>/chunks <debug_dir>/step6_chunks
+   ```
+   其中 `<en_chunks_dir>` 为 baoyu-translate 输出目录下的 `chunks/` 子目录（如 `<debug_dir>/4.en.formatted.indexed-zh-CN/chunks`）。输出为：`<debug_dir>/step6_chunks/chunk-NN-zh.md`
+   
+   **分支 B：无英文 chunks（生成 chunks）**
+   
+   使用 `{baseDir}/scripts/chunk.ts` 对 `<debug_dir>/4.en.formatted.indexed.md` 进行分块（max-words 2000），输出到 `<debug_dir>/step6_chunks/`：
+   ```bash
+   ${BUN_X} {baseDir}/scripts/chunk.ts <debug_dir>/4.en.formatted.indexed.md --max-words 2000 --output-dir <debug_dir>/step6_chunks
+   ```   
+   
+   运行以下脚本，将 `5.en.formatted.indexed.zh.md` 按上述生成的英文 chunk 边界拆分为对应的中文 chunks：
+   ```bash
+   ${BUN_X} {baseDir}/scripts/splitZhByChunks.ts <debug_dir>/5.en.formatted.indexed.zh.md <debug_dir>/step6_chunks <debug_dir>/step6_chunks
+   ```
+   
+3. 处理 chunks
+   2.2 对每对 chunk **并行**启动子 agent，每个 agent：
       - 读取提示词
-      - 读取对应英文 chunk：`<en_chunks_dir>/chunks/chunk-NN.md`
-      - 读取对应中文 chunk：`<en_chunks_dir>/chunk-NN-zh.md`（最终翻译，非草稿）
+      - 读取对应英文 chunk：`<en_chunks_dir>/chunks/chunk-NN.md` 或者 `<debug_dir>/step6_chunks/chunk-NN.md`
+      - 读取对应中文 chunk：`<debug_dir>/step6_chunks/chunk-NN-zh.md`（最终翻译，非草稿）
       - 按提示词进行分句对齐，输出到 `<debug_dir>/step6_chunks/chunk-NN-segmented.md`
-   2.2 等待全部完成后，按顺序合并为 `<debug_dir>/6.en.formatted.indexed.zh.segmention.md`
-
-   **分支 B：无 chunks（文件较短，未分块）**
-
-   直接以整体文件作为输入，启动单个 agent：
-      - 英文：`<debug_dir>/4.en.formatted.indexed.md`
-      - 中文：`<debug_dir>/5.en.formatted.indexed.zh.md`
-      - 输出到 `<debug_dir>/step6_chunks/chunk-01-segmented.md`，合并为 `<debug_dir>/6.en.formatted.indexed.zh.segmention.md`
+   2.3 等待全部完成后，按顺序合并为 `<debug_dir>/6.en.formatted.indexed.zh.segmention.md`
 3. 展开完整双语对照文本：
    ```bash
    ${BUN_X} {baseDir}/scripts/runExpandSegmentFull.ts <debug_dir>/3.en.formatted.json <debug_dir>/5.en.formatted.indexed.zh.md <debug_dir>/6.en.formatted.indexed.zh.segmention.md <debug_dir>/6.en.formatted.indexed.zh.segmention.full.md
