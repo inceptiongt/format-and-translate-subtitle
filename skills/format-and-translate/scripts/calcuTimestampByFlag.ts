@@ -10,7 +10,11 @@ function escapeRegex(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-export function expandCompactFlags(originalItems: SubtitleItem[], compactFlagMd: string): string {
+export function expandCompactFlags(
+  originalItems: SubtitleItem[],
+  compactFlagMd: string,
+  unmatchedOut?: Set<number>
+): string {
   const lineFlags = new Map<number, Array<{ before: string; after: string | null }>>();
 
   for (const line of compactFlagMd.split('\n')) {
@@ -39,6 +43,7 @@ export function expandCompactFlags(originalItems: SubtitleItem[], compactFlagMd:
     for (const { before, after } of flags) {
       // Try exact match first; if it fails, strip trailing punctuation added by LLM
       const candidates = [before, before.replace(/[.!?,;…]+$/, '')];
+      let matched = false;
       for (const b of candidates) {
         let next = flaggedText;
         if (after) {
@@ -49,13 +54,103 @@ export function expandCompactFlags(originalItems: SubtitleItem[], compactFlagMd:
           const patternEnd = new RegExp(`(${escapeRegex(b)})\\s*$`);
           next = flaggedText.replace(patternEnd, '$1[end]');
         }
-        if (next !== flaggedText) { flaggedText = next; break; }
+        if (next !== flaggedText) { flaggedText = next; matched = true; break; }
       }
+      if (!matched) unmatchedOut?.add(i);
     }
     resultLines.push(`[${i}] ${flaggedText}`);
   }
 
   return resultLines.join('\n');
+}
+
+interface DebugSentence {
+  text: string;
+  sources: Array<{ idx: number; unmatched: boolean }>;
+}
+
+function flushWithinLinePartsDebug(
+  parts: string[],
+  srcIdx: number,
+  sentences: DebugSentence[]
+): void {
+  let text = '';
+  for (const part of parts) {
+    text = joinText(text, part);
+    if (wordCount(part) >= 10) {
+      if (text.trim()) sentences.push({ text: text.trim(), sources: [{ idx: srcIdx, unmatched: false }] });
+      text = '';
+    }
+  }
+  if (text.trim()) sentences.push({ text: text.trim(), sources: [{ idx: srcIdx, unmatched: false }] });
+}
+
+export function expandFlagFullForDebug(originalItems: SubtitleItem[], compactFlagMd: string): string {
+  const itemsWithFlags = new Set<number>();
+  for (const line of compactFlagMd.split('\n')) {
+    const m = line.match(/^\[(\d+)\]/);
+    if (m) itemsWithFlags.add(parseInt(m[1], 10));
+  }
+
+  const unmatchedOut = new Set<number>();
+  const expandedMd = expandCompactFlags(originalItems, compactFlagMd, unmatchedOut);
+
+  const sentences: DebugSentence[] = [];
+  let accText = '';
+  let accSources: Array<{ idx: number; unmatched: boolean }> = [];
+  let accLineIndex: number | null = null;
+
+  for (const line of expandedMd.split('\n')) {
+    const match = line.match(/^\[(\d+)\]\s*(.*)$/);
+    if (!match) continue;
+
+    const index = parseInt(match[1], 10);
+    const content = match[2];
+    const parts = content.split('[end]');
+    const isUnmatched = itemsWithFlags.has(index) && unmatchedOut.has(index);
+
+    if (parts.length === 1) {
+      if (accText === '') accLineIndex = index;
+      accSources.push({ idx: index, unmatched: isUnmatched });
+      accText = joinText(accText, parts[0]);
+    } else {
+      const completedParts = parts.slice(0, -1);
+      const trailingPart = parts[parts.length - 1];
+      const hasCrossLine = accText !== '' && accLineIndex !== index;
+
+      if (hasCrossLine) {
+        accText = joinText(accText, completedParts[0]);
+        accSources.push({ idx: index, unmatched: false });
+        if (accText.trim()) sentences.push({ text: accText.trim(), sources: accSources });
+        accText = '';
+        accSources = [];
+        accLineIndex = null;
+        if (completedParts.length > 1) {
+          flushWithinLinePartsDebug(completedParts.slice(1), index, sentences);
+        }
+      } else {
+        flushWithinLinePartsDebug(completedParts, index, sentences);
+        accText = '';
+        accSources = [];
+        accLineIndex = null;
+      }
+
+      if (trailingPart.trim()) {
+        accText = trailingPart;
+        accSources = [{ idx: index, unmatched: false }];
+        accLineIndex = index;
+      }
+    }
+  }
+
+  if (accText.trim()) sentences.push({ text: accText.trim(), sources: accSources });
+
+  return sentences
+    .map((s, n) => {
+      const srcStr = s.sources.map(src => (src.unmatched ? '+-' : '+') + src.idx).join('');
+      return `[${n + 1}:${srcStr}] ${s.text}`;
+    })
+    .join('\n');
 }
 
 function joinText(a: string, b: string): string {

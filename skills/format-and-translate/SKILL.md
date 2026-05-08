@@ -83,14 +83,20 @@ ${BUN_X} {baseDir}/scripts/step1.ts <en_json_path> <debug_dir>
    - 读取提示词
    - 读取对应 chunk 文件
    - 输出到 `<debug_dir>/step2_chunks/chunk-NN-flagged.md`
-4. 等待全部完成后，按顺序合并为 `<debug_dir>/2.en.indexed.flag.md`
-5. 展开完整文本：
+   - 等待全部完成后，按顺序合并为 `<debug_dir>/2.en.indexed.flag.md`
+4. 展开完整文本并检查 `[end]` flag 准确性：
    ```bash
    ${BUN_X} {baseDir}/scripts/runExpandFlagFull.ts <debug_dir>/1.en.indexed.json <debug_dir>/2.en.indexed.flag.md <debug_dir>/2.en.indexed.flag.full.md
-   ```**输出**：
-`<debug_dir>/2.en.indexed.flag.md`
-`<debug_dir>/2.en.indexed.flag.full.md`（含 `[end]` 标记的完整原文，仅供 debug）
-6. console info: 有效 flag / 全部 flag —— `grep -c '\[end\]' <debug_dir>/2.en.indexed.flag.full.md` / `grep -c '\[end\]' <debug_dir>/2.en.indexed.flag.md`
+   ```
+   输出格式为 `[n:+m1+m2+-m3] sentence_text`，其中：
+   - `n` 为合并后的句子序号
+   - `+mi` 表示来源原始条目 mi（其 `[end]` 已匹配，或无 flag）
+   - `+-mi` 表示来源原始条目 mi，但其 compact flag 中的 `[end]` **未被匹配**
+   **输出**：`<debug_dir>/2.en.indexed.flag.full.md`（合并后句子 + 来源索引）
+
+   
+   
+6. console info: 总句子数 / 含未匹配flag的句子数 —— `grep -c '^\[' <debug_dir>/2.en.indexed.flag.full.md` / `grep -c ':\(.*\)+-' <debug_dir>/2.en.indexed.flag.full.md`
 
 ---
 
@@ -226,7 +232,7 @@ zh.segmention.md 文件只统计行数，不统计字数。
 json 文件不统计
 
 **计算额外信息**
-`<about_end_flag>` = 有效 flag / 全部 flag: `grep -c '\[end\]' <debug_dir>/2.en.indexed.flag.full.md` / `grep -c '\[end\]' <debug_dir>/2.en.indexed.flag.md`
+`<about_end_flag>` = 已匹配句子数 / 含未匹配flag句子数: `grep -c '^\[' <debug_dir>/2.en.indexed.flag.full.md` / `grep -c ':\(.*\)+-' <debug_dir>/2.en.indexed.flag.full.md`
 
 `<about_segment_flag>` = 有效 flag / 全部 flag: `grep -c '^\[.*\]' <debug_dir>/6.en.formatted.indexed.zh.segmention.full.md` / `grep -c '^\[.*\]\s$' <debug_dir>/6.en.formatted.indexed.zh.segmention.full.md`
 
