@@ -24,8 +24,8 @@ export function expandCompactFlags(originalItems: SubtitleItem[], compactFlagMd:
   }
 
   const resultLines: string[] = [];
-  for (let i = 0; i < originalItems.length; i++) {
-    const item = originalItems[i];
+  for (let i = 1; i <= originalItems.length; i++) {
+    const item = originalItems[i - 1];
     if (!item) continue;
     const text = item.segs.map(s => s.utf8).join('');
     const flags = lineFlags.get(i);
@@ -119,7 +119,7 @@ export function calcuTimestampByFlag(
 
     const index = parseInt(match[1], 10);
     const content = match[2];
-    const originalItem = originalItems[index];
+    const originalItem = originalItems[index - 1];
     if (!originalItem) continue;
 
     const cleanLength = content.replace(/\[end\]/g, '').length;

@@ -20,9 +20,10 @@ export function expandSegmentFull(
   const resultLines: string[] = [];
 
   formattedJson.forEach((item, n) => {
+    const idx = n + 1;
     const enText = item.segs.map((s) => s.utf8).join('');
-    const zhText = zhLines.get(n) ?? '';
-    const desc = descriptors.get(n);
+    const zhText = zhLines.get(idx) ?? '';
+    const desc = descriptors.get(idx);
 
     const enParts =
       desc && desc.enSplits.length > 0 ? applySplits(enText, desc.enSplits) : [enText.trim()];
@@ -37,12 +38,12 @@ export function expandSegmentFull(
     }
     const count = Math.max(enParts.length, zhParts.length);
     if (count === 1) {
-      resultLines.push(`[${n}.1:en] ${enParts[0] ?? ''}`);
-      resultLines.push(`[${n}.1:zh] ${zhParts[0] ?? ''}`);
+      resultLines.push(`[${idx}.1:en] ${enParts[0] ?? ''}`);
+      resultLines.push(`[${idx}.1:zh] ${zhParts[0] ?? ''}`);
     } else {
       for (let m = 1; m <= count; m++) {
-        resultLines.push(`[${n}.${m}:en] ${enParts[m - 1] ?? ''}`);
-        resultLines.push(`[${n}.${m}:zh] ${zhParts[m - 1] ?? ''}`);
+        resultLines.push(`[${idx}.${m}:en] ${enParts[m - 1] ?? ''}`);
+        resultLines.push(`[${idx}.${m}:zh] ${zhParts[m - 1] ?? ''}`);
       }
     }
     resultLines.push('');

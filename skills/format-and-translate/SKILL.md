@@ -75,9 +75,9 @@ ${BUN_X} {baseDir}/scripts/step1.ts <en_json_path> <debug_dir>
 
 **执行方式**：
 1. 读取提示词：`{baseDir}/prompts/step2_segmentation.md`
-2. 使用 `{baseDir}/scripts/chunk.ts` 对`<debug_dir>/1.en.indexed.md` 进行分块（max-words 2000），输出到 `<debug_dir>/step2_chunks/`：
+2. 使用 `{baseDir}/scripts/chunk.ts` 对`<debug_dir>/1.en.indexed.md` 进行分块（max-words 3000），输出到 `<debug_dir>/step2_chunks/`：
    ```bash
-   ${BUN_X} {baseDir}/scripts/chunk.ts <debug_dir>/1.en.indexed.md --max-words 2000 --output-dir <debug_dir>/step2_chunks
+   ${BUN_X} {baseDir}/scripts/chunk.ts <debug_dir>/1.en.indexed.md --max-words 3000 --output-dir <debug_dir>/step2_chunks
    ```
 3. 对每个 chunk，按提示词处理：根据句意确定 `[end]` 边界位置；对每个 chunk **并行**启动子 agent（subagent），每个 agent：
    - 读取提示词

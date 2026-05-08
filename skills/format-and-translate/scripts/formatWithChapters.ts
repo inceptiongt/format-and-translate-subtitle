@@ -25,7 +25,7 @@ export function formatWithChapters(
     }
 
     const text = item.segs[0].utf8;
-    output += `[${index}] ${text}\n`;
+    output += `[${index + 1}] ${text}\n`;
   });
 
   return output.trim();

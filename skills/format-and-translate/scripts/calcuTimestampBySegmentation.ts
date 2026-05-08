@@ -96,9 +96,10 @@ export function calcuTimestampBySegmentation(
   const parentGroups = new Map<number, Map<number, { original: string; translation: string }>>();
 
   formattedJson.forEach((item, n) => {
+    const idx = n + 1;
     const enText = item.segs.map(s => s.utf8).join('');
-    const zhText = zhLines.get(n) ?? '';
-    const desc = splitDescriptors.get(n);
+    const zhText = zhLines.get(idx) ?? '';
+    const desc = splitDescriptors.get(idx);
 
     const enParts = (desc && desc.enSplits.length > 0)
       ? applySplits(enText, desc.enSplits)

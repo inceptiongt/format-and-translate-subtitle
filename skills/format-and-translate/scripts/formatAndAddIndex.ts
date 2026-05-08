@@ -27,7 +27,7 @@ function cleanRawText(raw: string): string {
 export function formatAndAddIndex(subtitleItems: SubtitleItem[]): string {
   return subtitleItems
     .filter(isValidItem)
-    .map((item, index) => `[${index}] ${cleanRawText(getRawText(item))}`)
+    .map((item, index) => `[${index + 1}] ${cleanRawText(getRawText(item))}`)
     .join('\n');
 }
 

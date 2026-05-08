@@ -29,22 +29,22 @@ Tips:
 
 # Example
 **Input**
-[0] Hey Starship Addicts my name is ZacK Golden and welcome to another CSI Starbase Deep Dive
-[1] Investigation. We have a lot to cover today so I'm going to attempt to get into this as quickly as
-[2] possible all of you - uhhh returning viewers - go ahead and take this time to throw a bag of popcorn
-[3] in the microwave because this is that episode I've been warning you about for the last two months and
-[4] it's going to get a little intense. For everyone else, if this is your first time clicking on a
-[5] CSI Starbase thumbnail...Then Hello, and welcome to the channel. Thanks for giving us a chance!
-[6] I don't usually do this but because of the length of this episode I feel like I should
+[1] Hey Starship Addicts my name is ZacK Golden and welcome to another CSI Starbase Deep Dive
+[2] Investigation. We have a lot to cover today so I'm going to attempt to get into this as quickly as
+[3] possible all of you - uhhh returning viewers - go ahead and take this time to throw a bag of popcorn
+[4] in the microwave because this is that episode I've been warning you about for the last two months and
+[5] it's going to get a little intense. For everyone else, if this is your first time clicking on a
+[6] CSI Starbase thumbnail...Then Hello, and welcome to the channel. Thanks for giving us a chance!
+[7] I don't usually do this but because of the length of this episode I feel like I should
 
 **Intermediate results**
-[0] Hey Starship Addicts my name is ZacK Golden and welcome to another CSI Starbase Deep Dive
-[1] Investigation.[end] We have a lot to cover today so I'm going to attempt to get into this as quickly as
-[2] possible.[end] all of you - uhhh returning viewers - go ahead and take this time to throw a bag of popcorn
-[3] in the microwave because this is that episode I've been warning you about for the last two months and
-[4] it's going to get a little intense.[end] For everyone else, if this is your first time clicking on a
-[5] CSI Starbase thumbnail...[end] Then Hello, and welcome to the channel. Thanks for giving us a chance![end]
-[6] I don't usually do this but because of the length of this episode I feel like I should
+[1] Hey Starship Addicts my name is ZacK Golden and welcome to another CSI Starbase Deep Dive
+[2] Investigation.[end] We have a lot to cover today so I'm going to attempt to get into this as quickly as
+[3] possible.[end] all of you - uhhh returning viewers - go ahead and take this time to throw a bag of popcorn
+[4] in the microwave because this is that episode I've been warning you about for the last two months and
+[5] it's going to get a little intense.[end] For everyone else, if this is your first time clicking on a
+[6] CSI Starbase thumbnail...[end] Then Hello, and welcome to the channel. Thanks for giving us a chance![end]
+[7] I don't usually do this but because of the length of this episode I feel like I should
 
 **Output**
 [1] Investigation.[end]We
