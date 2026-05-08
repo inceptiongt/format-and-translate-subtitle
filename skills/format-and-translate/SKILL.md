@@ -94,8 +94,50 @@ ${BUN_X} {baseDir}/scripts/step1.ts <en_json_path> <debug_dir>
    - `+-mi` 表示来源原始条目 mi，但其 compact flag 中的 `[end]` **未被匹配**
    **输出**：`<debug_dir>/2.en.indexed.flag.full.md`（合并后句子 + 来源索引）
 
-   
-   
+5. 根据 `2.en.indexed.flag.full.md` 评估断句质量，决定后续操作：
+
+   **任务一：匹配率检查（全量重跑判断）**
+
+   运行统计脚本：
+   ```bash
+   ${BUN_X} {baseDir}/scripts/analyzeFlags.ts <debug_dir>/2.en.indexed.flag.full.md
+   ```
+   输出：`total_mi=X unmatched_mi=Y matched_rate=ZZ%`（exit code 0 表示 ≥80%，1 表示 <80%）
+
+   **若 matched_rate < 80%**（LLM 标记的 `[end]` 大量无法匹配）：
+   - 清空 `<debug_dir>/step2_chunks/`
+   - 重新分块，改为 `--max-words 2000`：
+     ```bash
+     ${BUN_X} {baseDir}/scripts/chunk.ts <debug_dir>/1.en.indexed.md --max-words 2000 --output-dir <debug_dir>/step2_chunks
+     ```
+   - 重复步骤 3 和步骤 4（LLM 处理 + 展开 flag.full.md）
+   - 若重跑后仍 < 80%，输出警告，继续执行任务二
+
+   **任务二：对断句质量差的片段局部重新断句**
+
+   从 `2.en.indexed.flag.full.md` 中提取需修复的句子（含 `+-mi` 或 sentence_text > 40 词），
+   收集其来源 mi，在 `1.en.indexed.md` 中找到对应原始行：
+   ```bash
+   ${BUN_X} {baseDir}/scripts/extractPartialIndexed.ts <debug_dir>/2.en.indexed.flag.full.md <debug_dir>/1.en.indexed.md <debug_dir>/2.en.indexed.part.md
+   ```
+   **输出**：`<debug_dir>/2.en.indexed.part.md`（需重新断句的原始行，保留原始 mi 索引；若已存在则先重命名为 `.back`）
+
+   若输出为空（无需修复），跳过以下步骤。
+
+   对 `2.en.indexed.part.md` 直接运行步骤 3 的 LLM 断句（不分块，单个 agent），得到：
+   `<debug_dir>/2.en.indexed.part.flag.md`
+
+   将 `2.en.indexed.part.flag.md` 合并回 `2.en.indexed.flag.md`（以 part.md 中的 mi 集合为基准，
+   part.flag.md 有该 mi 则替换，无则从 flag.md 删除；输出文件若已存在则先重命名为 `.back`）：
+   ```bash
+   ${BUN_X} {baseDir}/scripts/mergePartialFlags.ts <debug_dir>/2.en.indexed.flag.md <debug_dir>/2.en.indexed.part.flag.md <debug_dir>/2.en.indexed.flag.md
+   ```
+
+   重新生成 flag.full.md（若已存在则先重命名为 `.back`）：
+   ```bash
+   ${BUN_X} {baseDir}/scripts/runExpandFlagFull.ts <debug_dir>/1.en.indexed.json <debug_dir>/2.en.indexed.flag.md <debug_dir>/2.en.indexed.flag.full.md
+   ```
+
 6. console info: 总句子数 / 含未匹配flag的句子数 —— `grep -c '^\[' <debug_dir>/2.en.indexed.flag.full.md` / `grep -c ':\(.*\)+-' <debug_dir>/2.en.indexed.flag.full.md`
 
 ---

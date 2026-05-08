@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { expandFlagFull } from './expandFlagFull';
 
 const [indexedJsonPath, flagMdPath, outputPath] = process.argv.slice(2);
@@ -11,6 +11,7 @@ try {
   const items = JSON.parse(readFileSync(indexedJsonPath, 'utf-8'));
   const flagMd = readFileSync(flagMdPath, 'utf-8');
   const fullMd = expandFlagFull(items, flagMd);
+  if (existsSync(outputPath)) renameSync(outputPath, outputPath + '.back');
   writeFileSync(outputPath, fullMd);
   console.log('Done:', outputPath);
 } catch (error) {
