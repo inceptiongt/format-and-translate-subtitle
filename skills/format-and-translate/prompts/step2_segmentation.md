@@ -26,6 +26,7 @@ Tips:
 - Do not change the original words.
 - Do not merge or split the original `[n]` segments.
 - If there are no punctuation marks at the end of the sentence, not to add the one, keep it.
+- **Length control**: Ensure that the number of words in a complete sentence is less than 40. If a sentence is too long (more than 40 words), it should be divided into several segments.
 
 # Example
 **Input**

@@ -100,11 +100,11 @@ ${BUN_X} {baseDir}/scripts/step1.ts <en_json_path> <debug_dir>
 
    运行统计脚本：
    ```bash
-   ${BUN_X} {baseDir}/scripts/analyzeFlags.ts <debug_dir>/2.en.indexed.flag.full.md
+   ${BUN_X} {baseDir}/scripts/analyzeFlags.ts <debug_dir>/2.en.indexed.flag.full.md <debug_dir>/2.en.indexed.flag.analy.json
    ```
-   输出：`total_mi=X unmatched_mi=Y matched_rate=ZZ%`（exit code 0 表示 ≥80%，1 表示 <80%）
+   输出（保存至 `<debug_dir>/2.en.indexed.flag.analy.json`）：`{ "totalMi": X, "unmatchedMiCount": Y, "matchedRate": 0.ZZ, "unmatchedMiList": [...], "longSentencesCount": Z, "longSentences": [...] }`（exit code 0 表示 matchedRate ≥ 0.8，1 表示 < 0.8）
 
-   **若 matched_rate < 80%**（LLM 标记的 `[end]` 大量无法匹配）：
+   **若 `matchedRate < 0.8`**（读取 `2.en.indexed.flag.analy.json` 中 `matchedRate`）（LLM 标记的 `[end]` 大量无法匹配）：
    - 清空 `<debug_dir>/step2_chunks/`
    - 重新分块，改为 `--max-words 2000`：
      ```bash
@@ -115,27 +115,34 @@ ${BUN_X} {baseDir}/scripts/step1.ts <en_json_path> <debug_dir>
 
    **任务二：对断句质量差的片段局部重新断句**
 
-   从 `2.en.indexed.flag.full.md` 中提取需修复的句子（含 `+-mi` 或 sentence_text > 40 词），
-   收集其来源 mi，在 `1.en.indexed.md` 中找到对应原始行：
+   根据 `2.en.indexed.flag.analy.json`，从 `1.en.indexed.md` 中提取需修复的句子
+   （`unmatchedMiList` 中的 mi 及 `longSentences` 中的 mi）：
    ```bash
-   ${BUN_X} {baseDir}/scripts/extractPartialIndexed.ts <debug_dir>/2.en.indexed.flag.full.md <debug_dir>/1.en.indexed.md <debug_dir>/2.en.indexed.part.md
+   ${BUN_X} {baseDir}/scripts/extractPartialIndexed.ts <debug_dir>/2.en.indexed.flag.analy.json <debug_dir>/1.en.indexed.md <debug_dir>/2.en.indexed.part.md
    ```
    **输出**：`<debug_dir>/2.en.indexed.part.md`（需重新断句的原始行，保留原始 mi 索引；若已存在则先重命名为 `.back`）
 
    若输出为空（无需修复），跳过以下步骤。
 
-   对 `2.en.indexed.part.md` 直接运行步骤 3 的 LLM 断句（不分块，单个 agent），得到：
+   对 `2.en.indexed.part.md` 直接运行步骤 3 的 LLM 断句（不分块，启用单个子 agent），得到：
    `<debug_dir>/2.en.indexed.part.flag.md`
 
-   将 `2.en.indexed.part.flag.md` 合并回 `2.en.indexed.flag.md`（以 part.md 中的 mi 集合为基准，
-   part.flag.md 有该 mi 则替换，无则从 flag.md 删除；输出文件若已存在则先重命名为 `.back`）：
+   将 `2.en.indexed.part.flag.md` 合并回 `2.en.indexed.flag.md`（以 `2.en.indexed.flag.md` 中已匹配的 mi 条目为基础，
+   用 `part.flag.md` 中的条目添加或替换对应 mi）：
    ```bash
-   ${BUN_X} {baseDir}/scripts/mergePartialFlags.ts <debug_dir>/2.en.indexed.flag.md <debug_dir>/2.en.indexed.part.flag.md <debug_dir>/2.en.indexed.flag.md
+   mv <debug_dir>/2.en.indexed.flag.md <debug_dir>/2.en.indexed.flag.md.back
+   ${BUN_X} {baseDir}/scripts/mergePartialFlags.ts <debug_dir>/2.en.indexed.part.flag.md <debug_dir>/2.en.indexed.flag.md <debug_dir>/2.en.indexed.flag.analy.json
    ```
 
    重新生成 flag.full.md（若已存在则先重命名为 `.back`）：
    ```bash
    ${BUN_X} {baseDir}/scripts/runExpandFlagFull.ts <debug_dir>/1.en.indexed.json <debug_dir>/2.en.indexed.flag.md <debug_dir>/2.en.indexed.flag.full.md
+   ```
+
+   重新统计，先备份 analy.json，再生成新的：
+   ```bash
+   mv <debug_dir>/2.en.indexed.flag.analy.json <debug_dir>/2.en.indexed.flag.analy.json.back
+   ${BUN_X} {baseDir}/scripts/analyzeFlags.ts <debug_dir>/2.en.indexed.flag.full.md <debug_dir>/2.en.indexed.flag.analy.json
    ```
 
 6. console info: 总句子数 / 含未匹配flag的句子数 —— `grep -c '^\[' <debug_dir>/2.en.indexed.flag.full.md` / `grep -c ':\(.*\)+-' <debug_dir>/2.en.indexed.flag.full.md`
