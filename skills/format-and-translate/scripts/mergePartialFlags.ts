@@ -4,11 +4,11 @@ import { join, dirname, basename } from 'node:path';
 const [partFlagMdPath, outputPath, statsJsonPath] = process.argv.slice(2);
 if (!partFlagMdPath || !outputPath) {
   console.error('Usage: mergePartialFlags.ts <part_flag_md> <output_flag_md> [stats_json]');
-  console.error('  Reads <output_flag_md>.back as base, derives flag.full.md from same dir.');
+  console.error('  Reads <output_flag_md> as base, derives flag.full.md from same dir.');
   process.exit(1);
 }
 
-const mainFlagMdPath = outputPath + '.back';
+const mainFlagMdPath = outputPath;
 const flagFullMdPath = join(dirname(outputPath), basename(outputPath).replace('flag.md', 'flag.full.md'));
 
 function parseFlagMd(content: string): Map<number, string> {
@@ -36,7 +36,7 @@ if (statsJsonPath) {
   }
 }
 
-// Base: correctly matched mi from main.back (exclude unmatched)
+// Base: correctly matched mi from main flag.md (exclude unmatched)
 const mainMap = parseFlagMd(readFileSync(mainFlagMdPath, 'utf-8'));
 const totalMain = mainMap.size;
 for (const mi of unmatchedMiSet) mainMap.delete(mi);

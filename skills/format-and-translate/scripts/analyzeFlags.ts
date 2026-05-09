@@ -51,6 +51,6 @@ const stats = {
 };
 
 writeFileSync(outputJsonPath, JSON.stringify(stats, null, 2) + '\n');
-console.error(`analyzeFlags: saved to ${outputJsonPath}`);
+console.log(`analyzeFlags: saved to ${outputJsonPath}`);
 
 process.exit(matchedRate >= 0.8 ? 0 : 1);

@@ -120,30 +120,31 @@ ${BUN_X} {baseDir}/scripts/step1.ts <en_json_path> <debug_dir>
    ```bash
    ${BUN_X} {baseDir}/scripts/extractPartialIndexed.ts <debug_dir>/2.en.indexed.flag.analy.json <debug_dir>/1.en.indexed.md <debug_dir>/2.en.indexed.part.md
    ```
-   **输出**：`<debug_dir>/2.en.indexed.part.md`（需重新断句的原始行，保留原始 mi 索引；若已存在则先重命名为 `.back`）
+   **输出**：`<debug_dir>/2.en.indexed.part.md`（需重新断句的原始行，保留原始 mi 索引）
 
    若输出为空（无需修复），跳过以下步骤。
 
    对 `2.en.indexed.part.md` 直接运行步骤 3 的 LLM 断句（不分块，启用单个子 agent），得到：
    `<debug_dir>/2.en.indexed.part.flag.md`
 
-   将 `2.en.indexed.part.flag.md` 合并回 `2.en.indexed.flag.md`（以 `2.en.indexed.flag.md` 中已匹配的 mi 条目为基础，
-   用 `part.flag.md` 中的条目添加或替换对应 mi）：
+   将 `2.en.indexed.part.flag.md` 合并回 `2.en.indexed.flag.md`（以 `2.en.indexed.flag.md` 中已匹配的 mi 条目为基础，用 `part.flag.md` 中的条目添加或替换对应 mi）：
    ```bash
-   mv <debug_dir>/2.en.indexed.flag.md <debug_dir>/2.en.indexed.flag.md.back
+   cp <debug_dir>/2.en.indexed.flag.md <debug_dir>/2.en.indexed.flag.{timestamp}.md
    ${BUN_X} {baseDir}/scripts/mergePartialFlags.ts <debug_dir>/2.en.indexed.part.flag.md <debug_dir>/2.en.indexed.flag.md <debug_dir>/2.en.indexed.flag.analy.json
    ```
 
-   重新生成 flag.full.md（若已存在则先重命名为 `.back`）：
+   重新生成 flag.full.md（若已存在则先备份为在扩展名前添加 `.{timestamp}` 后缀，如 `2.en.indexed.flag.full.{timestamp}.md`）：
    ```bash
+   cp <debug_dir>/2.en.indexed.flag.full.md <debug_dir>/2.en.indexed.flag.full.{timestamp}.md
    ${BUN_X} {baseDir}/scripts/runExpandFlagFull.ts <debug_dir>/1.en.indexed.json <debug_dir>/2.en.indexed.flag.md <debug_dir>/2.en.indexed.flag.full.md
    ```
 
    重新统计，先备份 analy.json，再生成新的：
    ```bash
-   mv <debug_dir>/2.en.indexed.flag.analy.json <debug_dir>/2.en.indexed.flag.analy.json.back
+   cp <debug_dir>/2.en.indexed.flag.analy.json <debug_dir>/2.en.indexed.flag.analy.{timestamp}.json
    ${BUN_X} {baseDir}/scripts/analyzeFlags.ts <debug_dir>/2.en.indexed.flag.full.md <debug_dir>/2.en.indexed.flag.analy.json
    ```
+   如果还存在 longSentences 或 unmatchedMiList，再次执行“任务二”；**最多再执行两次**。
 
 6. console info: 总句子数 / 含未匹配flag的句子数 —— `grep -c '^\[' <debug_dir>/2.en.indexed.flag.full.md` / `grep -c ':\(.*\)+-' <debug_dir>/2.en.indexed.flag.full.md`
 

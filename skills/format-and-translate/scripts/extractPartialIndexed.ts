@@ -1,8 +1,4 @@
-import { existsSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
-
-function backupIfExists(path: string): void {
-  if (existsSync(path)) renameSync(path, path + '.back');
-}
+import { readFileSync, writeFileSync } from 'node:fs';
 
 const [analyJsonPath, indexedMdPath, outputPath] = process.argv.slice(2);
 if (!analyJsonPath || !indexedMdPath || !outputPath) {
@@ -22,7 +18,6 @@ for (const s of analy.longSentences as Array<{ miList: number[] }>) {
 }
 
 if (miSet.size === 0) {
-  backupIfExists(outputPath);
   writeFileSync(outputPath, '');
   console.log('No problematic sentences found. Output is empty.');
   process.exit(0);
@@ -46,6 +41,5 @@ for (let i = 0; i < lines.length; i++) {
   outputLines.push(lines[i].line);
 }
 
-backupIfExists(outputPath);
 writeFileSync(outputPath, outputLines.join('\n') + '\n');
 console.log(`Extracted ${lines.length} lines (${miSet.size} mi indices) to ${outputPath}`);
