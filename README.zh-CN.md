@@ -14,14 +14,8 @@
 
 ## 🚀 安装与设置
 
-**对于 Gemini CLI：**
 ```bash
-gemini skill install /path/to/this-repo
-```
-
-**对于 Claude Code：**
-```bash
-claude plugin install /path/to/this-repo
+npx skills add inceptiongt/format-and-translate-subtitle
 ```
 
 ## 🚀 使用方法
@@ -29,7 +23,7 @@ claude plugin install /path/to/this-repo
 安装完成后，你可以直接从你的 Agent 中调用该工具：
 
 ```bash
-/format-and-translate <en_json3_path> [info_json_path] [--steps 1-7] [--output-dir <dir>]
+/gtt-format-and-translate <en_json3_path> [info_json_path] [--steps 1-7] [--output-dir <dir>]
 ```
 
 ### 参数说明：
@@ -40,9 +34,9 @@ claude plugin install /path/to/this-repo
 
 ### 示例：
 ```bash
-/format-and-translate video.en.json3 video.info.json
-/format-and-translate video.en.json3 --steps 5-7
-/format-and-translate /path/to/video.en.json3 --output-dir ./my-subtitles/
+/gtt-format-and-translate video.en.json3 video.info.json
+/gtt-format-and-translate video.en.json3 --steps 5-7
+/gtt-format-and-translate /path/to/video.en.json3 --output-dir ./my-subtitles/
 ```
 
 ## 💡 小贴士：下载 YouTube 字幕
@@ -50,7 +44,7 @@ claude plugin install /path/to/this-repo
 你可以使用 `yt-dlp` 来下载所需的 `json3` 字幕和视频信息：
 
 ```bash
-yt-dlp --write-subs --sub-format json3 --write-info-json --skip-download "https://www.youtube.com/watch?v=VIDEO_ID"
+yt-dlp --write-subs --sub-format json3  --sub-langs en --write-info-json --skip-download "https://www.youtube.com/watch?v=VIDEO_ID"
 ```
 
 这将为你提供此工具所需的 `.en.json3` 和 `.info.json` 文件。
