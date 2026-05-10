@@ -1,5 +1,5 @@
 {
-  "name": "gtt-format-and-translate",
+  "name": "format-and-translate-subtitle",
   "description": "将 YouTube 字幕 JSON 转换为双语（英文 + 中文）SRT 文件，执行完整 7 步工作流",
   "version": "1.0.0",
   "author": {
@@ -7,7 +7,7 @@
   },
   "plugins": [
     {
-      "name": "gtt-format-and-translate",
+      "name": "format-and-translate-subtitle",
       "description": "Content generation, AI backends, and utility tools for daily work efficiency",
       "source": "./",
       "strict": false,
