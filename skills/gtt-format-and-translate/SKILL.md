@@ -1,6 +1,6 @@
 ---
 name: gtt-format-and-translate
-description: 将 YouTube 英文字幕转换为双语字幕（中文+英文），核心功能：英文片段的组合、重新断句、计算时间戳；翻译，通过 baoyu-skill 精译；中英文语义对齐、长句拆分、长度控制利于显示。 Convert YouTube English subtitles into bilingual subtitles (Chinese + English). Core features: combining English segments, re-phrasing, and calculating timestamps; translation using the baoyu-skill for high-quality results; semantic alignment between Chinese and English, splitting long sentences, and length control for optimal display.
+description: "将 YouTube 英文字幕转换为双语字幕（中文+英文），核心功能：英文片段的组合、重新断句、计算时间戳；翻译，通过 baoyu-skill 精译；中英文语义对齐、长句拆分、长度控制利于显示。 Convert YouTube English subtitles into bilingual subtitles (Chinese + English). Core features: combining English segments, re-phrasing, and calculating timestamps; translation using the baoyu-skill for high-quality results; semantic alignment between Chinese and English, splitting long sentences, and length control for optimal display."
 version: 1.0.0
 metadata:
   openclaw:
