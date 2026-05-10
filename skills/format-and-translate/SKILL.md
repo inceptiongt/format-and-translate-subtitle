@@ -1,6 +1,6 @@
 ---
 name: format-and-translate
-description: "将 YouTube 字幕 JSON 转换为双语（英文 + 中文）SRT 文件，执行完整 7 步工作流。用法: /format-and-translate <en_json_path> [info_json_path] [--steps 1-7] [--output-dir <dir>]"
+description: "将 YouTube 字幕 JSON 转换为双语（英文 + 中文）SRT 文件，执行完整 7 步工作流。用法: /format-and-translate <en_json3_path> [info_json_path] [--steps 1-7] [--output-dir <dir>]"
 version: 1.0.0
 metadata:
   openclaw:
@@ -16,14 +16,14 @@ metadata:
 ## 用法
 
 ```
-/format-and-translate <en_json_path> [info_json_path] [--steps 1-7] [--output-dir <dir>]
+/format-and-translate <en_json3_path> [info_json_path] [--steps 1-7] [--output-dir <dir>]
 ```
 
 **参数说明：**
-- `en_json_path`：YouTube json3 格式的英文字幕文件路径（必填）
+- `en_json3_path`：YouTube json3 格式的英文字幕文件路径（必填）
 - `info_json_path`：包含 chapters 信息的 JSON 文件路径（可选，无则跳过章节标题）
 - `--steps`：指定执行哪些步骤，格式 `1-7`（默认全部）。可指定范围如 `3-7`，或单步如 `5`
-- `--output-dir`：中间文件输出目录（默认为 `<en_json_dir>/Subtitle`）
+- `--output-dir`：中间文件输出目录（默认为 `<en_json3_dir>/Subtitle`）
 
 **示例：**
 ```
@@ -36,11 +36,11 @@ metadata:
 
 ## 执行前准备
 
-1. 解析 `$ARGUMENTS`，提取 `en_json_path`、`info_json_path`（可能为空）、`--steps` 范围、`--output-dir`
-2. 将 `en_json_path` 转为绝对路径；提取其所在目录 `en_json_dir`
-3. 若未指定 `--output-dir`，则：`output_dir = <en_json_dir>/Subtitle`
-4. 验证 `en_json_path` 文件存在
-5. 若未提供 `info_json_path`，则在 `en_json_dir` 下寻找对应的 `info.json`：从 `en_json_path` 文件名去掉 `.en.json` 后缀，加上 `.info.json`（例如 `video.en.json` -> `video.info.json`）；若文件存在则使用，否则设为空字符串 `""`
+1. 解析 `$ARGUMENTS`，提取 `en_json3_path`、`info_json_path`（可能为空）、`--steps` 范围、`--output-dir`
+2. 将 `en_json3_path` 转为绝对路径；提取其所在目录 `en_json3_dir`
+3. 若未指定 `--output-dir`，则：`output_dir = <en_json3_dir>/Subtitle`
+4. 验证 `en_json3_path` 文件存在
+5. 若未提供 `info_json_path`，则在 `en_json3_dir` 下寻找对应的 `info.json`：从 `en_json3_path` 文件名去掉 `.en.json` 后缀，加上 `.info.json`（例如 `video.en.json` -> `video.info.json`）；若文件存在则使用，否则设为空字符串 `""`
 6. 确认 `bun` 可用：`bun --version`
 7. 创建 output 目录：`mkdir -p <output_dir>`
 8. 告知用户将执行哪些步骤
@@ -53,19 +53,15 @@ metadata:
 
 ---
 
-## Step 1（Code）：en.json -> 1.en.indexed.md + 1.en.indexed.json
+## Step 1: 整理输入的 json3 文件
 
-**脚本**：`{baseDir}/scripts/step1.ts`
+**输入、输出**：en.json3 -> 1.en.indexed.md + 1.en.indexed.json
 
-**执行方式**：
+**执行方式（Code）**：
 
 ```bash
-${BUN_X} {baseDir}/scripts/step1.ts <en_json_path> <output_dir>
+${BUN_X} {baseDir}/scripts/step1.ts <en_json3_path> <output_dir>
 ```
-
-**输出**：
-- `<output_dir>/1.en.indexed.json`（清洗后的 JSON，已过滤无效 item，dDurationMs 已更新）
-- `<output_dir>/1.en.indexed.md`（带序号的字幕文本，已过滤 `[music]`/空行）
 
 ---
 
@@ -294,7 +290,7 @@ json 文件不统计
 ```markdown
 ✅ format-and-translate 完成！
 
-**输入**：`<en_json_path>`
+**输入**：`<en_json3_path>`
 
 **输出**：`<output_dir>/7.final.srt`
 
