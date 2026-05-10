@@ -21,4 +21,5 @@ const segments = calcuTimestampBySegmentation(formattedJson, compactSplitMd, zhL
 const srt = genDualSrt(segments);
 
 writeFileSync(outputSrtPath, srt);
+writeFileSync(outputSrtPath.replace('.srt', '.json'), JSON.stringify(segments, null, 2), 'utf-8');
 console.log('Step 7 done:', segments.length, 'segments →', outputSrtPath);

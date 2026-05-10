@@ -1,17 +1,18 @@
 ---
-name: format-and-translate
-description: "将 YouTube 字幕 JSON 转换为双语（英文 + 中文）SRT 文件，执行完整 7 步工作流。用法: /format-and-translate <en_json3_path> [info_json_path] [--steps 1-7] [--output-dir <dir>]"
+name: gtt-format-and-translate
+description: 将 YouTube 英文字幕转换为双语字幕（中文+英文），核心功能：英文片段的组合、重新断句、计算时间戳；翻译，通过 baoyu-skill 精译；中英文语义对齐、长句拆分、长度控制利于显示。 Convert YouTube English subtitles into bilingual subtitles (Chinese + English). Core features: combining English segments, re-phrasing, and calculating timestamps; translation using the baoyu-skill for high-quality results; semantic alignment between Chinese and English, splitting long sentences, and length control for optimal display.
 version: 1.0.0
 metadata:
   openclaw:
     requires:
       anyBins:
-        - bun
+      - bun
 ---
 
 # format-and-translate
 
-将 YouTube 字幕 JSON 转换为双语（英文 + 中文）SRT 文件，执行完整 7 步工作流。
+将 YouTube 英文字幕转换为双语字幕（中文+英文），核心是 7 步工作流。
+输入为 en.json3、info.json(可选) 文件，可通过 yt-dlp 下载；输出为字幕的 srt 和 json。
 
 ## 用法
 
@@ -34,13 +35,17 @@ metadata:
 
 ---
 
+## Script Directory
+
+Scripts in `scripts/` subdirectory. `{baseDir}` = this SKILL.md's directory path. Resolve `${BUN_X}` runtime: if `bun` installed → `bun`; if `npx` available → `npx -y bun`; else suggest installing bun. Replace `{baseDir}` and `${BUN_X}` with actual values.
+
 ## 执行前准备
 
 1. 解析 `$ARGUMENTS`，提取 `en_json3_path`、`info_json_path`（可能为空）、`--steps` 范围、`--output-dir`
 2. 将 `en_json3_path` 转为绝对路径；提取其所在目录 `en_json3_dir`
 3. 若未指定 `--output-dir`，则：`output_dir = <en_json3_dir>/Subtitle`
 4. 验证 `en_json3_path` 文件存在
-5. 若未提供 `info_json_path`，则在 `en_json3_dir` 下寻找对应的 `info.json`：从 `en_json3_path` 文件名去掉 `.en.json` 后缀，加上 `.info.json`（例如 `video.en.json` -> `video.info.json`）；若文件存在则使用，否则设为空字符串 `""`
+5. 若未提供 `info_json_path`，则在 `en_json3_dir` 下寻找对应的 `info.json`：从 `en_json3_path` 文件名去掉 `.en.json3` 后缀，加上 `.info.json`（例如 `video.en.json3` -> `video.info.json`）；若文件存在则使用，否则设为空字符串 `""`
 6. 确认 `bun` 可用：`bun --version`
 7. 创建 output 目录：`mkdir -p <output_dir>`
 8. 告知用户将执行哪些步骤
@@ -53,7 +58,9 @@ metadata:
 
 ---
 
-## Step 1: 整理输入的 json3 文件
+## Workflow
+
+### Step 1: 整理输入的 json3 文件 (Code)
 
 **输入、输出**：en.json3 -> 1.en.indexed.md + 1.en.indexed.json
 
@@ -65,9 +72,9 @@ ${BUN_X} {baseDir}/scripts/step1.ts <en_json3_path> <output_dir>
 
 ---
 
-## Step 2（LLM + Code）：1.en.indexed.md -> 2.en.indexed.flag.md -> 2.en.indexed.flag.full.md
+### Step 2: 英文断句 (LLM + Code)
 
-**提示词**：`{baseDir}/prompts/step2_segmentation.md`
+**输入、输出**：1.en.indexed.md -> 2.en.indexed.flag.md -> 2.en.indexed.flag.full.md
 
 **执行方式**：
 1. 读取提示词：`{baseDir}/prompts/step2_segmentation.md`
@@ -92,7 +99,7 @@ ${BUN_X} {baseDir}/scripts/step1.ts <en_json3_path> <output_dir>
 
 5. 根据 `2.en.indexed.flag.full.md` 评估断句质量，决定后续操作：
 
-   **任务一：匹配率检查（全量重跑判断）**
+   **5.1：匹配率检查（全量重跑判断）**
 
    运行统计脚本：
    ```bash
@@ -107,9 +114,9 @@ ${BUN_X} {baseDir}/scripts/step1.ts <en_json3_path> <output_dir>
      ${BUN_X} {baseDir}/scripts/chunk.ts <output_dir>/1.en.indexed.md --max-words 2000 --output-dir <output_dir>/step2_chunks
      ```
    - 重复步骤 3 和步骤 4（LLM 处理 + 展开 flag.full.md）
-   - 若重跑后仍 < 80%，输出警告，继续执行任务二
+   - 若重跑后仍 < 80%，输出警告，继续执行5.2（局部修复），**不再全量重跑**。
 
-   **任务二：对断句质量差的片段局部重新断句**
+   **5.2：任务二：对断句质量差的片段局部重新断句**
 
    根据 `2.en.indexed.flag.analy.json`，从 `1.en.indexed.md` 中提取需修复的句子
    （`unmatchedMiList` 中的 mi 及 `longSentences` 中的 mi）：
@@ -142,34 +149,24 @@ ${BUN_X} {baseDir}/scripts/step1.ts <en_json3_path> <output_dir>
    ```
    如果还存在 longSentences 或 unmatchedMiList，再次执行“任务二”；**最多再执行两次**。
 
-6. console info: 总句子数 / 含未匹配flag的句子数 —— `grep -c '^\[' <output_dir>/2.en.indexed.flag.full.md` / `grep -c ':\(.*\)+-' <output_dir>/2.en.indexed.flag.full.md`
-
 ---
 
-## Step 3（Code）：1.en.indexed.json + 2.en.indexed.flag.md -> 3.en.formatted.json
+### Step 3: 生成格式化 JSON (Code)
 
-**脚本**：`{baseDir}/scripts/step3.ts`
+**输入、输出**：1.en.indexed.json + 2.en.indexed.flag.md -> 3.en.formatted.json
 
-**执行方式**：
-
+**执行方式（Code）**：
 ```bash
 ${BUN_X} {baseDir}/scripts/step3.ts <output_dir>/1.en.indexed.json <output_dir>/2.en.indexed.flag.md <output_dir>/3.en.formatted.json
 ```
 
-**输出**：`<output_dir>/3.en.formatted.json`
-
 ---
 
-## Step 4（Code）：3.en.formatted.json + info.json -> 4.en.formatted.indexed.md
+### Step 4: 生成待翻译 Markdown (Code)
 
-**脚本**：`{baseDir}/scripts/step4.ts`
+**输入、输出**：3.en.formatted.json + info.json -> 4.en.formatted.indexed.md
 
-**分支处理**：
-- 若 `info_json_path` 不为空字符串：整合 chapters 信息（第二个参数传路径）
-- 若为空字符串：不插入章节标题
-
-**执行方式**：
-
+**执行方式（Code）**：
 ```bash
 # 有 info.json：
 ${BUN_X} {baseDir}/scripts/step4.ts <output_dir>/3.en.formatted.json <info_json_path> <output_dir>/4.en.formatted.indexed.md
@@ -178,11 +175,11 @@ ${BUN_X} {baseDir}/scripts/step4.ts <output_dir>/3.en.formatted.json <info_json_
 ${BUN_X} {baseDir}/scripts/step4.ts <output_dir>/3.en.formatted.json "" <output_dir>/4.en.formatted.indexed.md
 ```
 
-**输出**：`<output_dir>/4.en.formatted.indexed.md`
-
 ---
 
-## Step 5（LLM）：4.en.formatted.indexed.md -> 5.en.formatted.indexed.zh.md
+### Step 5: 翻译 (LLM)
+
+**输入、输出**：4.en.formatted.indexed.md -> 5.en.formatted.indexed.zh.md
 
 **工具**：`baoyu-skills:baoyu-translate` skill
 
@@ -198,11 +195,11 @@ ${BUN_X} {baseDir}/scripts/step4.ts <output_dir>/3.en.formatted.json "" <output_
 3. 翻译 `# 章节标题` 行
 4. 输出格式与输入完全一致
 
-**输出**：`<output_dir>/5.en.formatted.indexed.zh.md`
-
 ---
 
-## Step 6（LLM + Code）：4.en.formatted.indexed.md + 5.en.formatted.indexed.zh.md -> 6.en.formatted.indexed.zh.segmention.md -> 6.en.formatted.indexed.zh.segmention.full.md
+### Step 6: 中文分句与对齐 (LLM + Code)
+
+**输入、输出**：4.en.formatted.indexed.md + 5.en.formatted.indexed.zh.md -> 6.en.formatted.indexed.zh.segmention.full.md
 
 **提示词**：`{baseDir}/prompts/step6_segmentation_alignment.md`
 
@@ -237,11 +234,10 @@ ${BUN_X} {baseDir}/scripts/step4.ts <output_dir>/3.en.formatted.json "" <output_
       - 读取对应中文 chunk：`<output_dir>/step6_chunks/chunk-NN-zh.md`（最终翻译，非草稿）
       - 按提示词进行分句对齐，输出到 `<output_dir>/step6_chunks/chunk-NN-segmented.md`
    2.3 等待全部完成后，按顺序合并为 `<output_dir>/6.en.formatted.indexed.zh.segmention.md`
-3. 展开完整双语对照文本：
+4. 展开完整双语对照文本：
    ```bash
    ${BUN_X} {baseDir}/scripts/runExpandSegmentFull.ts <output_dir>/3.en.formatted.json <output_dir>/5.en.formatted.indexed.zh.md <output_dir>/6.en.formatted.indexed.zh.segmention.md <output_dir>/6.en.formatted.indexed.zh.segmention.full.md
    ```
-4. console info: 有效 flag / 全部 flag —— `grep -c '^\[.*\]' <output_dir>/6.en.formatted.indexed.zh.segmention.full.md` / `grep -c '^\[.*\]\s$' <output_dir>/6.en.formatted.indexed.zh.segmention.full.md`
 
 **输出**：
 `<output_dir>/6.en.formatted.indexed.zh.segmention.md`
@@ -249,67 +245,22 @@ ${BUN_X} {baseDir}/scripts/step4.ts <output_dir>/3.en.formatted.json "" <output_
 
 ---
 
-## Step 7（Code）：3.en.formatted.json + 6.en.formatted.indexed.zh.segmention.md + 5.en.formatted.indexed.zh.md -> 7.final.srt
+### Step 7: 生成最终 SRT (Code)
 
-**脚本**：`{baseDir}/scripts/step7.ts`
+**输入、输出**：3.en.formatted.json + 6.en.formatted.indexed.zh.segmention.md + 5.en.formatted.indexed.zh.md -> 7.final.srt
 
-**执行方式**：
-
+**执行方式（Code）**：
 ```bash
 ${BUN_X} {baseDir}/scripts/step7.ts <output_dir>/3.en.formatted.json <output_dir>/6.en.formatted.indexed.zh.segmention.md <output_dir>/5.en.formatted.indexed.zh.md <output_dir>/7.final.srt
 ```
 
-**输出**：`<output_dir>/7.final.srt`（双语字幕，中文在上，英文在下）
-
 ---
 
-## 完成汇报
+## 统计汇报 (Code)
 
-**所有步骤执行完毕后，统计数量**:
+**输入、输出**：1.en.indexed.json + 3.en.formatted.json + 7.final.json -> statistic.json
 
-统计 md 文件内容的数量，包括行数、字数：
--  行数，通过 `grep -c '^\[\d\+\.\?\d\?\]' file.md` 统计。
--  字数，内容为英文的，通过 `wc -w file.md` 统计；内容为中文的（文件名 .zh.md 后缀），通过 `wc -m file.md` 统计。
-
-zh.segmention.md 文件只统计行数，不统计字数。
-
-统计 srt 文件的字幕数量（即字幕块数量），通过 `grep -c '^\d\+$' file.srt` 统计。
-
-json 文件不统计
-
-**计算额外信息**
-`<about_end_flag>` = 已匹配句子数 / 含未匹配flag句子数: `grep -c '^\[' <output_dir>/2.en.indexed.flag.full.md` / `grep -c ':\(.*\)+-' <output_dir>/2.en.indexed.flag.full.md`
-
-`<about_segment_flag>` = 有效 flag / 全部 flag: `grep -c '^\[.*\]' <output_dir>/6.en.formatted.indexed.zh.segmention.full.md` / `grep -c '^\[.*\]\s$' <output_dir>/6.en.formatted.indexed.zh.segmention.full.md`
-
-
-**输出**
-
-保存摘要为 `<output_dir>/statistics.md`:
-
-```markdown
-✅ format-and-translate 完成！
-
-**输入**：`<en_json3_path>`
-
-**输出**：`<output_dir>/7.final.srt`
-
-| 步骤 | 输出文件 | 统计信息 | 备注 |
-| :--- | :--- | :--- | :--- |
-| **Step 1** | `1.en.indexed.md`<br>`1.en.indexed.json` | **行数**: ...<br>**英文词数**: ... | - |
-| **Step 2** | `2.en.indexed.flag.md`<br>`2.en.indexed.flag.full.md` | **行数**: ...<br>**英文词数**: ... | `<about_end_flag>` |
-| **Step 3** | `3.en.formatted.json` | - | - |
-| **Step 4** | `4.en.formatted.indexed.md` | **行数**: ...<br>**英文词数**: ... | - |
-| **Step 5** | `5.en.formatted.indexed.zh.md` | **行数**: ...<br>**中文字数**: ... | - |
-| **Step 6** | `6.en.formatted.indexed.zh.segmention.md`<br>`6.en.formatted.indexed.zh.segmention.full.md`| **行数**: ... | `<about_segment_flag>` |
-| **Step 7** | `7.final.srt` | **字幕块数**: ... | 最终双语字幕 |
+**执行方式（Code）**：
+```bash
+${BUN_X} {baseDir}/scripts/report.ts <output_dir>/1.en.indexed.json <output_dir>/3.en.formatted.json <output_dir>/7.final.json <output_dir>/statistics.json
 ```
-
----
-
-## 错误处理
-
-- 某步骤失败时，显示错误信息，询问用户是否：(a) 重试 (b) 跳过继续 (c) 停止
-- 代码步骤（1/3/4/7）失败通常是路径或依赖问题，检查 bun 可用性（`bun --version`）和文件路径
-- LLM 步骤（2/5/6）若遇到 API 限额，等待后重试失败的 chunk，已成功的 chunk 无需重新处理
-- 若 output 目录已有输出文件，询问用户是否覆盖或跳过该步骤

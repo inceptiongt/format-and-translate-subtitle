@@ -6,14 +6,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A Claude Code skill plugin that converts YouTube subtitle JSON (json3 format) into dual-language (Chinese + English) SRT files via a 7-step pipeline.
 
-**Invocation:** `/format_and_translate <en_json_path> [info_json_path] [--steps 1-7] [--output-dir <dir>]`
+**Invocation:** `/format-and-translate <en_json_path> [info_json_path] [--steps 1-7] [--output-dir <dir>]`
 
 ## Running Scripts
 
 All scripts require **Bun** runtime. Install dependencies first:
 
 ```bash
-cd skills/formatAndTranslate/scripts
+cd skills/format-and-translate/scripts
 bun install
 ```
 
