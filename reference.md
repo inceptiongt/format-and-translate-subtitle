@@ -174,7 +174,7 @@ Hey Starship Addicts my name is ZacK Golden and welcome to another CSI Starbase 
 ### `scripts/step1.ts`
 
 ```bash
-bun scripts/step1.ts <en_json_path> <debug_dir>
+bun scripts/step1.ts <en_json_path> <output_dir>
 ```
 
 Calls `formatAndAddIndex()` and `cleanSubtitleItems()` from `formatAndAddIndex.ts`. Writes `1.en.indexed.md` and `1.en.indexed.json`.
@@ -184,7 +184,7 @@ Calls `formatAndAddIndex()` and `cleanSubtitleItems()` from `formatAndAddIndex.t
 ### `scripts/step3.ts`
 
 ```bash
-bun scripts/step3.ts <debug_dir>/1.en.indexed.json <debug_dir>/2.en.indexed.flag.md <debug_dir>/3.en.formatted.json
+bun scripts/step3.ts <output_dir>/1.en.indexed.json <output_dir>/2.en.indexed.flag.md <output_dir>/3.en.formatted.json
 ```
 
 Calls `calcuTimestampByFlag()` from `calcuTimestampByFlag.ts`.
@@ -196,7 +196,7 @@ Calls `calcuTimestampByFlag()` from `calcuTimestampByFlag.ts`.
 ### `scripts/step4.ts`
 
 ```bash
-bun scripts/step4.ts <debug_dir>/3.en.formatted.json [info_json_path] <debug_dir>/4.en.formatted.indexed.md
+bun scripts/step4.ts <output_dir>/3.en.formatted.json [info_json_path] <output_dir>/4.en.formatted.indexed.md
 # Pass "" as second arg when no info.json is available
 ```
 
@@ -207,7 +207,7 @@ Calls `formatWithChapters()` from `formatWithChapters.ts`. Chapter headings are 
 ### `scripts/step7.ts`
 
 ```bash
-bun scripts/step7.ts <debug_dir>/3.en.formatted.json <debug_dir>/6.en.formatted.indexed.zh.segmention.md <debug_dir>/7.final.srt
+bun scripts/step7.ts <output_dir>/3.en.formatted.json <output_dir>/6.en.formatted.indexed.zh.segmention.md <output_dir>/7.final.srt
 ```
 
 Calls `calcuTimestampBySegmentation()` then `genDualSrt()`.

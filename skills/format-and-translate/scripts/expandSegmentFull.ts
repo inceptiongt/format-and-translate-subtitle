@@ -2,7 +2,7 @@ import { applySplits, parseCompactSplitMd } from './calcuTimestampBySegmentation
 import type { FormattedSubtitleItem } from './calcuTimestampBySegmentation';
 
 /**
- * Expands compact segmentation into a full bilingual Markdown string for debugging.
+ * Expands compact segmentation into a full bilingual Markdown string for outputging.
  * This is a pure function with no side effects.
  */
 export function expandSegmentFull(

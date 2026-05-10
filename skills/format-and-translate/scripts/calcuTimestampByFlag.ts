@@ -64,15 +64,15 @@ export function expandCompactFlags(
   return resultLines.join('\n');
 }
 
-interface DebugSentence {
+interface OutputSentence {
   text: string;
   sources: Array<{ idx: number; unmatched: boolean }>;
 }
 
-function flushWithinLinePartsDebug(
+function flushWithinLinePartsOutput(
   parts: string[],
   srcIdx: number,
-  sentences: DebugSentence[]
+  sentences: OutputSentence[]
 ): void {
   let text = '';
   for (const part of parts) {
@@ -85,7 +85,7 @@ function flushWithinLinePartsDebug(
   if (text.trim()) sentences.push({ text: text.trim(), sources: [{ idx: srcIdx, unmatched: false }] });
 }
 
-export function expandFlagFullForDebug(originalItems: SubtitleItem[], compactFlagMd: string): string {
+export function expandFlagFullForOutput(originalItems: SubtitleItem[], compactFlagMd: string): string {
   const itemsWithFlags = new Set<number>();
   for (const line of compactFlagMd.split('\n')) {
     const m = line.match(/^\[(\d+)\]/);
@@ -95,7 +95,7 @@ export function expandFlagFullForDebug(originalItems: SubtitleItem[], compactFla
   const unmatchedOut = new Set<number>();
   const expandedMd = expandCompactFlags(originalItems, compactFlagMd, unmatchedOut);
 
-  const sentences: DebugSentence[] = [];
+  const sentences: OutputSentence[] = [];
   let accText = '';
   let accSources: Array<{ idx: number; unmatched: boolean }> = [];
   let accLineIndex: number | null = null;
@@ -126,10 +126,10 @@ export function expandFlagFullForDebug(originalItems: SubtitleItem[], compactFla
         accSources = [];
         accLineIndex = null;
         if (completedParts.length > 1) {
-          flushWithinLinePartsDebug(completedParts.slice(1), index, sentences);
+          flushWithinLinePartsOutput(completedParts.slice(1), index, sentences);
         }
       } else {
-        flushWithinLinePartsDebug(completedParts, index, sentences);
+        flushWithinLinePartsOutput(completedParts, index, sentences);
         accText = '';
         accSources = [];
         accLineIndex = null;
