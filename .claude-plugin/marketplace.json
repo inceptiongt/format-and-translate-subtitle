@@ -1,9 +1,11 @@
 {
   "name": "format-and-translate-subtitle",
-  "description": "将 YouTube 字幕 JSON 转换为双语（英文 + 中文）SRT 文件，执行完整 7 步工作流",
-  "version": "1.0.0",
-  "author": {
+  "owner": {
     "name": "gtt"
+  },
+  "metadata": {
+    "description": "将 YouTube 字幕 JSON 转换为双语（英文 + 中文）SRT 文件，执行完整 7 步工作流",
+    "version": "1.0.0"
   },
   "plugins": [
     {
