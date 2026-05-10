@@ -26,6 +26,15 @@ Once installed, you can invoke the skill directly from your agent:
 ```bash
 /gtt-format-and-translate <en_json3_path> [info_json_path] [--steps 1-7] [--output-dir <dir>]
 ```
+### 💡 Pro Tip: Downloading YouTube Subtitles
+
+You can use `yt-dlp` to download the required `json3` subtitles and video info:
+
+```bash
+yt-dlp --write-subs --sub-format json3 --sub-langs en --write-info-json --skip-download "https://www.youtube.com/watch?v=VIDEO_ID"
+```
+
+This will give you the `.en.json3` and `.info.json` files needed for this tool.
 
 ### Arguments:
 - `<en_json3_path>`: (Required) Path to the YouTube `json3` English subtitle file.
@@ -39,16 +48,6 @@ Once installed, you can invoke the skill directly from your agent:
 /gtt-format-and-translate video.en.json3 --steps 5-7
 /gtt-format-and-translate /path/to/video.en.json3 --output-dir ./my-subtitles/
 ```
-
-## 💡 Pro Tip: Downloading YouTube Subtitles
-
-You can use `yt-dlp` to download the required `json3` subtitles and video info:
-
-```bash
-yt-dlp --write-subs --sub-format json3 --sub-langs en --write-info-json --skip-download "https://www.youtube.com/watch?v=VIDEO_ID"
-```
-
-This will give you the `.en.json3` and `.info.json` files needed for this tool.
 
 ## 🛠 Workflow Overview
 

@@ -25,6 +25,15 @@ npx skills add inceptiongt/format-and-translate-subtitle
 ```bash
 /gtt-format-and-translate <en_json3_path> [info_json_path] [--steps 1-7] [--output-dir <dir>]
 ```
+### 💡 小贴士：下载 YouTube 字幕
+
+你可以使用 `yt-dlp` 来下载所需的 `json3` 字幕和视频信息：
+
+```bash
+yt-dlp --write-subs --sub-format json3  --sub-langs en --write-info-json --skip-download "https://www.youtube.com/watch?v=VIDEO_ID"
+```
+
+这将为你提供此工具所需的 `.en.json3` 和 `.info.json` 文件。
 
 ### 参数说明：
 - `<en_json3_path>`: (必填) YouTube `json3` 格式英文字幕文件的路径。
@@ -38,16 +47,6 @@ npx skills add inceptiongt/format-and-translate-subtitle
 /gtt-format-and-translate video.en.json3 --steps 5-7
 /gtt-format-and-translate /path/to/video.en.json3 --output-dir ./my-subtitles/
 ```
-
-## 💡 小贴士：下载 YouTube 字幕
-
-你可以使用 `yt-dlp` 来下载所需的 `json3` 字幕和视频信息：
-
-```bash
-yt-dlp --write-subs --sub-format json3  --sub-langs en --write-info-json --skip-download "https://www.youtube.com/watch?v=VIDEO_ID"
-```
-
-这将为你提供此工具所需的 `.en.json3` 和 `.info.json` 文件。
 
 ## 🛠 工作流概览
 
