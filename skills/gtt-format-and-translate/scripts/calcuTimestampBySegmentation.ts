@@ -27,11 +27,12 @@ function escapeRegex(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-export function applySplits(text: string, splits: SplitPoint[]): string[] {
-  if (splits.length === 0) return [text.trim()];
+export function applySplits(text: string, splits: SplitPoint[]): { parts: string[]; unmatched: number } {
+  if (splits.length === 0) return { parts: [text.trim()], unmatched: 0 };
 
   const parts: string[] = [];
   let remaining = text;
+  let unmatched = 0;
 
   for (const { before, after } of splits) {
     const regex = after
@@ -39,7 +40,10 @@ export function applySplits(text: string, splits: SplitPoint[]): string[] {
       : new RegExp(`(${escapeRegex(before)})\\s*$`);
 
     const match = regex.exec(remaining);
-    if (!match) continue;
+    if (!match) {
+      unmatched++;
+      continue;
+    }
 
     const leftEnd = match.index + match[1].length;
     const rightStart = after ? leftEnd + match[2].length : remaining.length;
@@ -49,7 +53,7 @@ export function applySplits(text: string, splits: SplitPoint[]): string[] {
   }
 
   parts.push(remaining.trim());
-  return parts.filter(p => p.length > 0);
+  return { parts: parts.filter((p) => p.length > 0), unmatched };
 }
 
 export function parseCompactSplitMd(compactSplitMd: string): Map<number, SplitDescriptor> {
@@ -63,7 +67,7 @@ export function parseCompactSplitMd(compactSplitMd: string): Map<number, SplitDe
     if (enMatch) {
       const n = parseInt(enMatch[1], 10);
       if (!descriptors.has(n)) descriptors.set(n, { enSplits: [], zhSplits: [], zhCopyCount: 0 });
-      descriptors.get(n)!.enSplits.push({ before: enMatch[3], after: enMatch[4].trim() || null });
+      descriptors.get(n)!.enSplits.push({ before: enMatch[3].trim(), after: enMatch[4].trim() || null });
       continue;
     }
 
@@ -79,7 +83,7 @@ export function parseCompactSplitMd(compactSplitMd: string): Map<number, SplitDe
     if (zhMatch) {
       const n = parseInt(zhMatch[1], 10);
       if (!descriptors.has(n)) descriptors.set(n, { enSplits: [], zhSplits: [], zhCopyCount: 0 });
-      descriptors.get(n)!.zhSplits.push({ before: zhMatch[3], after: zhMatch[4].trim() || null });
+      descriptors.get(n)!.zhSplits.push({ before: zhMatch[3].trim(), after: zhMatch[4].trim() || null });
     }
   }
 
@@ -97,17 +101,16 @@ export function calcuTimestampBySegmentation(
 
   formattedJson.forEach((item, n) => {
     const idx = n + 1;
-    const enText = item.segs.map(s => s.utf8).join('');
+    const enText = item.segs.map((s) => s.utf8).join('');
     const zhText = zhLines.get(idx) ?? '';
     const desc = splitDescriptors.get(idx);
 
-    const enParts = (desc && desc.enSplits.length > 0)
-      ? applySplits(enText, desc.enSplits)
-      : [enText.trim()];
+    const enParts =
+      desc && desc.enSplits.length > 0 ? applySplits(enText, desc.enSplits).parts : [enText.trim()];
 
     let zhParts: string[];
     if (desc && (desc.zhSplits.length > 0 || desc.zhCopyCount > 0)) {
-      zhParts = applySplits(zhText, desc.zhSplits);
+      zhParts = applySplits(zhText, desc.zhSplits).parts;
       for (let i = 0; i < desc.zhCopyCount; i++) zhParts.push('[copy]');
     } else {
       zhParts = [zhText.trim()];

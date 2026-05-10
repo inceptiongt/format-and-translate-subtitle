@@ -56,15 +56,14 @@ You can first generate **intermediate results**, then obtain the **output**. For
 [7] 你刚点进来的这集长篇专题，是专门为那些想要真正理解 SpaceX 在筹备首次 33 台发动机静态点火测试时所面临的严峻挑战的人准备的。
 
 **Intermediate results：**
-[7.1] This feature-length episode that you've just stumbled upon[segment]
-[7.2] is meant for people who want to get a real understanding[segment]
-[7.3] of the serious challenges that SpaceX is up against[segment]
-[7.4] as they prepare for this first ever 33 engine static fire test.[segment]
--
-[7.1] 你刚点进来的这集长篇专题，[segment]
-[7.2] 是专门为那些想要真正理解[segment]
-[7.3] SpaceX 在筹备首次 33 台发动机静态点火测试时[segment]
-[7.4] 所面临的严峻挑战的人准备的。[segment]
+[7.1:en] This feature-length episode that you've just stumbled upon[segment]
+[7.2:en] is meant for people who want to get a real understanding[segment]
+[7.3:en] of the serious challenges that SpaceX is up against[segment:en]
+[7.4:en] as they prepare for this first ever 33 engine static fire test.[segment]
+[7.1:zh] 你刚点进来的这集长篇专题，[segment]
+[7.2:zh] 是专门为那些想要真正理解[segment]
+[7.3:zh] SpaceX 在筹备首次 33 台发动机静态点火测试时[segment]
+[7.4:zh] 所面临的严峻挑战的人准备的。[segment]
 
 **Output:**
 [7.1:en] upon[segment]is
@@ -86,11 +85,10 @@ You can first generate **intermediate results**, then obtain the **output**. For
 [74] 这增加了能够加载到助推器上的氧气总质量。
 
 **Intermediate results：**
-[74.1] This increases the total mass of oxygen[segment]
-[74.2] that is able to be loaded onto the booster.[segment]
--
-[74.1] 这增加了能够加载到助推器上的氧气总质量。[segment]
-[74.2] [copy]
+[74.1:en] This increases the total mass of oxygen[segment]
+[74.2:en] that is able to be loaded onto the booster.[segment]
+[74.1:zh] 这增加了能够加载到助推器上的氧气总质量。[segment]
+[74.2:zh] [copy]
 
 **Output:**
 [74.1:en] oxygen,[segment]that

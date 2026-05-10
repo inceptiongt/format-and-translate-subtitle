@@ -234,14 +234,60 @@ ${BUN_X} {baseDir}/scripts/step4.ts <output_dir>/3.en.formatted.json "" <output_
       - 读取对应中文 chunk：`<output_dir>/step6_chunks/chunk-NN-zh.md`（最终翻译，非草稿）
       - 按提示词进行分句对齐，输出到 `<output_dir>/step6_chunks/chunk-NN-segmented.md`
    2.3 等待全部完成后，按顺序合并为 `<output_dir>/6.en.formatted.indexed.zh.segmention.md`
-4. 展开完整双语对照文本：
+4. 展开完整双语对照文本和生成分析报告：
    ```bash
    ${BUN_X} {baseDir}/scripts/runExpandSegmentFull.ts <output_dir>/3.en.formatted.json <output_dir>/5.en.formatted.indexed.zh.md <output_dir>/6.en.formatted.indexed.zh.segmention.md <output_dir>/6.en.formatted.indexed.zh.segmention.full.md
    ```
 
-**输出**：
-`<output_dir>/6.en.formatted.indexed.zh.segmention.md`
-`<output_dir>/6.en.formatted.indexed.zh.segmention.full.md`
+5. 匹配率检查与局部重试
+
+   根据 `6.en.formatted.indexed.zh.segmention.full.md` 评估对齐质量，决定后续操作：
+
+   **5.1：匹配率检查（全量重跑判断）**
+
+   读取 `6.en.formatted.indexed.zh.segmention.analy.json` 中的 `matchedRate`。
+
+   **若 `matchedRate < 0.8`**（LLM 标记的分隔符大量无法匹配）：
+   - 清空 `<output_dir>/step6_chunks/`
+   - 重新分块，改为 `--max-words 1500`：
+     ```bash
+     ${BUN_X} {baseDir}/scripts/chunk.ts <output_dir>/4.en.formatted.indexed.md --max-words 1500 --output-dir <output_dir>/step6_chunks
+     ```
+   - 重新拆分中文 chunks：
+     ```bash
+     ${BUN_X} {baseDir}/scripts/splitZhByChunks.ts <output_dir>/5.en.formatted.indexed.zh.md <output_dir>/step6_chunks <output_dir>/step6_chunks
+     ```
+   - 重复步骤 3 和步骤 4（LLM 处理 + 展开 full.md）
+   - 若重跑后仍 < 80%，输出警告，继续执行 5.2（局部修复），**不再全量重跑**。
+
+   **5.2：对质量差的片段局部重新对齐**
+
+   读取 `6.en.formatted.indexed.zh.segmention.analy.json` 中的 `all:unmatchedSegmentsList`。
+   
+   ```bash
+   ${BUN_X} {baseDir}/scripts/extractPartialSegments.ts <output_dir>/6.en.formatted.indexed.zh.segmention.analy.json <output_dir>/4.en.formatted.indexed.md <output_dir>/5.en.formatted.indexed.zh.md <output_dir>/6.en.part.md <output_dir>/6.zh.part.md
+   ```
+
+   若输出为空，跳过以下步骤。
+
+   对 `6.en.part.md` 和 `6.zh.part.md` 运行步骤 3 的 LLM 对齐（不分块，启用单个子 agent），输出到：
+   `<output_dir>/6.en-zh.part.segmented.md`
+
+   将修复后的片段合并回主文件（先备份）：
+   ```bash
+   cp <output_dir>/6.en.formatted.indexed.zh.segmention.md <output_dir>/6.en.formatted.indexed.zh.segmention.{timestamp}.md
+
+   ${BUN_X} {baseDir}/scripts/mergePartialSegments.ts <output_dir>/6.en-zh.part.segmented.md <output_dir>/6.en.formatted.indexed.zh.segmention.md
+   ```
+
+   重新生成 full.md 和 analy.json（先备份）：
+   ```bash
+   cp <output_dir>/6.en.formatted.indexed.zh.segmention.full.md <output_dir>/6.en.formatted.indexed.zh.segmention.full.{timestamp}.md
+   cp <output_dir>/6.en.formatted.indexed.zh.segmention.analy.json <output_dir>/6.en.formatted.indexed.zh.segmention.analy.{timestamp}.json
+
+   ${BUN_X} {baseDir}/scripts/runExpandSegmentFull.ts <output_dir>/3.en.formatted.json <output_dir>/5.en.formatted.indexed.zh.md <output_dir>/6.en.formatted.indexed.zh.segmention.md <output_dir>/6.en.formatted.indexed.zh.segmention.full.md
+   ```
+   如果还存在 unmatchedSegmentsList，再次执行“5.2”；**最多再执行两次**。
 
 ---
 

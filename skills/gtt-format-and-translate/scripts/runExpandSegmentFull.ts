@@ -13,9 +13,13 @@ try {
   const zhMdContent = readFileSync(zhMdPath, 'utf-8');
   const segMdContent = readFileSync(segMdPath, 'utf-8');
   
-  const fullMd = expandSegmentFull(formattedJson, zhMdContent, segMdContent);
+  const { fullMd, analy } = expandSegmentFull(formattedJson, zhMdContent, segMdContent);
   writeFileSync(outputPath, fullMd);
   console.log('Done:', outputPath);
+
+  const analyPath = outputPath.replace('.full.md', '.analy.json');
+  writeFileSync(analyPath, JSON.stringify(analy, null, 2), 'utf-8');
+  console.log('Analysis saved:', analyPath);
 } catch (error) {
   console.error('Error in runExpandSegmentFull:', error);
   process.exit(1);
