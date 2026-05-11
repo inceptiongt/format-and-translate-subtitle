@@ -71,6 +71,15 @@ export function parseCompactSplitMd(compactSplitMd: string): Map<number, SplitDe
       continue;
     }
 
+    // Fallback for malformed English split lines
+    const enMalformedMatch = trimmed.match(/^\[(\d+)(?:\.\d+)?:en\]/);
+    if (enMalformedMatch) {
+      const n = parseInt(enMalformedMatch[1], 10);
+      if (!descriptors.has(n)) descriptors.set(n, { enSplits: [], zhSplits: [], zhCopyCount: 0 });
+      descriptors.get(n)!.enSplits.push({ before: '\0MALFORMED_EN\0', after: null });
+      continue;
+    }
+
     const zhCopyMatch = trimmed.match(/^\[(\d+)\.(\d+):zh\]\s*\[copy\]$/);
     if (zhCopyMatch) {
       const n = parseInt(zhCopyMatch[1], 10);
@@ -84,6 +93,16 @@ export function parseCompactSplitMd(compactSplitMd: string): Map<number, SplitDe
       const n = parseInt(zhMatch[1], 10);
       if (!descriptors.has(n)) descriptors.set(n, { enSplits: [], zhSplits: [], zhCopyCount: 0 });
       descriptors.get(n)!.zhSplits.push({ before: zhMatch[3].trim(), after: zhMatch[4].trim() || null });
+      continue;
+    }
+
+    // Fallback for malformed Chinese split lines
+    const zhMalformedMatch = trimmed.match(/^\[(\d+)(?:\.\d+)?:zh\]/);
+    if (zhMalformedMatch) {
+      const n = parseInt(zhMalformedMatch[1], 10);
+      if (!descriptors.has(n)) descriptors.set(n, { enSplits: [], zhSplits: [], zhCopyCount: 0 });
+      descriptors.get(n)!.zhSplits.push({ before: '\0MALFORMED_ZH\0', after: null });
+      continue;
     }
   }
 
