@@ -1,7 +1,7 @@
 ---
 name: gtt-format-and-translate
 description: "将 YouTube 英文字幕转换为双语字幕（中文+英文），核心功能：英文片段的组合、重新断句、计算时间戳；翻译，通过 baoyu-skill 精译；中英文语义对齐、长句拆分、长度控制利于显示。 Convert YouTube English subtitles into bilingual subtitles (Chinese + English). Core features: combining English segments, re-phrasing, and calculating timestamps; translation using the baoyu-skill for high-quality results; semantic alignment between Chinese and English, splitting long sentences, and length control for optimal display."
-version: 1.0.0
+version: 1.2.0
 metadata:
   openclaw:
     requires:
@@ -105,7 +105,7 @@ ${BUN_X} {baseDir}/scripts/step1.ts <en_json3_path> <output_dir>
    ```bash
    ${BUN_X} {baseDir}/scripts/analyzeFlags.ts <output_dir>/2.en.indexed.flag.full.md <output_dir>/2.en.indexed.flag.analy.json
    ```
-   输出（保存至 `<output_dir>/2.en.indexed.flag.analy.json`）：`{ "totalMi": X, "unmatchedMiCount": Y, "matchedRate": 0.ZZ, "unmatchedMiList": [...], "longSentencesCount": Z, "longSentences": [...] }`（exit code 0 表示 matchedRate ≥ 0.8，1 表示 < 0.8）
+   输出（保存至 `<output_dir>/2.en.indexed.flag.analy.json`）：`{ "totalMi": X, "unmatchedMiCount": Y, "matchedRate": 0.ZZ, "unmatchedSentences": [{ "n": N, "words": W, "text": "...", "miList": [...] }], "longSentencesCount": Z, "longSentences": [{ "n": N, "words": W, "text": "...", "miList": [...] }] }`（exit code 0 表示 matchedRate ≥ 0.8，1 表示 < 0.8）
 
    **若 `matchedRate < 0.8`**（读取 `2.en.indexed.flag.analy.json` 中 `matchedRate`）（LLM 标记的 `[end]` 大量无法匹配）：
    - 清空 `<output_dir>/step2_chunks/`
@@ -116,38 +116,45 @@ ${BUN_X} {baseDir}/scripts/step1.ts <en_json3_path> <output_dir>
    - 重复步骤 3 和步骤 4（LLM 处理 + 展开 flag.full.md）
    - 若重跑后仍 < 80%，输出警告，继续执行5.2（局部修复），**不再全量重跑**。
 
-   **5.2：任务二：对断句质量差的片段局部重新断句**
+   **5.2：对断句质量差的片段局部重新断句**
 
-   根据 `2.en.indexed.flag.analy.json`，从 `1.en.indexed.md` 中提取需修复的句子
-   （`unmatchedMiList` 中的 mi 及 `longSentences` 中的 mi）：
+   **① 判断**：读取 `2.en.indexed.flag.analy.json`，若 `unmatchedSentences` 和 `longSentences` 均为空，跳过以下步骤。
+
+   **② 备份**（若文件存在则备份）：
+   ```bash
+   cp <output_dir>/2.en.indexed.flag.md <output_dir>/2.en.indexed.flag.{timestamp}.md
+   cp <output_dir>/2.en.indexed.flag.full.md <output_dir>/2.en.indexed.flag.full.{timestamp}.md
+   cp <output_dir>/2.en.indexed.flag.analy.json <output_dir>/2.en.indexed.flag.analy.{timestamp}.json
+   # 以下两个文件在第一次迭代时不存在，第二次及以后迭代时需要备份：
+   cp <output_dir>/2.en.indexed.part.md <output_dir>/2.en.indexed.part.{timestamp}.md
+   cp <output_dir>/2.en.indexed.part.flag.md <output_dir>/2.en.indexed.part.flag.{timestamp}.md
+   ```
+
+   **③ 提取需修复片段**（`unmatchedSentences` 和 `longSentences` 中各条目的 `miList`）：
    ```bash
    ${BUN_X} {baseDir}/scripts/extractPartialIndexed.ts <output_dir>/2.en.indexed.flag.analy.json <output_dir>/1.en.indexed.md <output_dir>/2.en.indexed.part.md
    ```
    **输出**：`<output_dir>/2.en.indexed.part.md`（需重新断句的原始行，保留原始 mi 索引）
 
-   若输出为空（无需修复），跳过以下步骤。
-
-   对 `2.en.indexed.part.md` 直接运行步骤 3 的 LLM 断句（不分块，启用单个子 agent），得到：
+   **④ 重新断句**：对 `2.en.indexed.part.md` 直接运行步骤 3 的 LLM 断句（不分块，启用单个子 agent），得到：
    `<output_dir>/2.en.indexed.part.flag.md`
 
-   将 `2.en.indexed.part.flag.md` 合并回 `2.en.indexed.flag.md`（以 `2.en.indexed.flag.md` 中已匹配的 mi 条目为基础，用 `part.flag.md` 中的条目添加或替换对应 mi）：
+   **⑤ 合并**：将 `2.en.indexed.part.flag.md` 合并回 `2.en.indexed.flag.md`（以 `2.en.indexed.flag.md` 中已匹配的 mi 条目为基础，用 `part.flag.md` 中的条目添加或替换对应 mi）：
    ```bash
-   cp <output_dir>/2.en.indexed.flag.md <output_dir>/2.en.indexed.flag.{timestamp}.md
    ${BUN_X} {baseDir}/scripts/mergePartialFlags.ts <output_dir>/2.en.indexed.part.flag.md <output_dir>/2.en.indexed.flag.md <output_dir>/2.en.indexed.flag.analy.json
    ```
 
-   重新生成 flag.full.md（若已存在则先备份为在扩展名前添加 `.{timestamp}` 后缀，如 `2.en.indexed.flag.full.{timestamp}.md`）：
+   **⑥ 重新生成 flag.full.md**：
    ```bash
-   cp <output_dir>/2.en.indexed.flag.full.md <output_dir>/2.en.indexed.flag.full.{timestamp}.md
    ${BUN_X} {baseDir}/scripts/runExpandFlagFull.ts <output_dir>/1.en.indexed.json <output_dir>/2.en.indexed.flag.md <output_dir>/2.en.indexed.flag.full.md
    ```
 
-   重新统计，先备份 analy.json，再生成新的：
+   **⑦ 重新统计**：
    ```bash
-   cp <output_dir>/2.en.indexed.flag.analy.json <output_dir>/2.en.indexed.flag.analy.{timestamp}.json
    ${BUN_X} {baseDir}/scripts/analyzeFlags.ts <output_dir>/2.en.indexed.flag.full.md <output_dir>/2.en.indexed.flag.analy.json
    ```
-   如果还存在 longSentences 或 unmatchedMiList，再次执行“任务二”；**最多再执行两次**。
+
+   **⑧ 再次判断**：若仍存在 `unmatchedSentences` 或 `longSentences`，从步骤②重复执行；**最多再执行两次**（共最多 3 次）。
 
 ---
 
@@ -262,32 +269,38 @@ ${BUN_X} {baseDir}/scripts/step4.ts <output_dir>/3.en.formatted.json "" <output_
 
    **5.2：对质量差的片段局部重新对齐**
 
-   读取 `6.en.formatted.indexed.zh.segmention.analy.json` 中的 `all:unmatchedSegmentsList`。
-   
+   **① 判断**：读取 `6.en.formatted.indexed.zh.segmention.analy.json`，若 `unmatchedSegmentsList` 为空，跳过以下步骤。
+
+   **② 备份**（若文件存在则备份）：
+   ```bash
+   cp <output_dir>/6.en.formatted.indexed.zh.segmention.md <output_dir>/6.en.formatted.indexed.zh.segmention.{timestamp}.md
+   cp <output_dir>/6.en.formatted.indexed.zh.segmention.full.md <output_dir>/6.en.formatted.indexed.zh.segmention.full.{timestamp}.md
+   cp <output_dir>/6.en.formatted.indexed.zh.segmention.analy.json <output_dir>/6.en.formatted.indexed.zh.segmention.analy.{timestamp}.json
+   # 以下文件在第一次迭代时不存在，第二次及以后迭代时需要备份：
+   cp <output_dir>/6.en.part.md <output_dir>/6.en.part.{timestamp}.md
+   cp <output_dir>/6.zh.part.md <output_dir>/6.zh.part.{timestamp}.md
+   cp <output_dir>/6.en-zh.part.segmented.md <output_dir>/6.en-zh.part.segmented.{timestamp}.md
+   ```
+
+   **③ 提取需修复片段**：
    ```bash
    ${BUN_X} {baseDir}/scripts/extractPartialSegments.ts <output_dir>/6.en.formatted.indexed.zh.segmention.analy.json <output_dir>/4.en.formatted.indexed.md <output_dir>/5.en.formatted.indexed.zh.md <output_dir>/6.en.part.md <output_dir>/6.zh.part.md
    ```
 
-   若输出为空，跳过以下步骤。
-
-   对 `6.en.part.md` 和 `6.zh.part.md` 运行步骤 3 的 LLM 对齐（不分块，启用单个子 agent），输出到：
+   **④ 重新对齐**：对 `6.en.part.md` 和 `6.zh.part.md` 运行步骤 3 的 LLM 对齐（不分块，启用单个子 agent），输出到：
    `<output_dir>/6.en-zh.part.segmented.md`
 
-   将修复后的片段合并回主文件（先备份）：
+   **⑤ 合并**：将修复后的片段合并回主文件：
    ```bash
-   cp <output_dir>/6.en.formatted.indexed.zh.segmention.md <output_dir>/6.en.formatted.indexed.zh.segmention.{timestamp}.md
-
    ${BUN_X} {baseDir}/scripts/mergePartialSegments.ts <output_dir>/6.en-zh.part.segmented.md <output_dir>/6.en.formatted.indexed.zh.segmention.md
    ```
 
-   重新生成 full.md 和 analy.json（先备份）：
+   **⑥ 重新生成 full.md 和 analy.json**：
    ```bash
-   cp <output_dir>/6.en.formatted.indexed.zh.segmention.full.md <output_dir>/6.en.formatted.indexed.zh.segmention.full.{timestamp}.md
-   cp <output_dir>/6.en.formatted.indexed.zh.segmention.analy.json <output_dir>/6.en.formatted.indexed.zh.segmention.analy.{timestamp}.json
-
    ${BUN_X} {baseDir}/scripts/runExpandSegmentFull.ts <output_dir>/3.en.formatted.json <output_dir>/5.en.formatted.indexed.zh.md <output_dir>/6.en.formatted.indexed.zh.segmention.md <output_dir>/6.en.formatted.indexed.zh.segmention.full.md
    ```
-   如果还存在 unmatchedSegmentsList，再次执行“5.2”；**最多再执行两次**。
+
+   **⑦ 再次判断**：若仍存在 `unmatchedSegmentsList`，从步骤②重复执行；**最多再执行两次**（共最多 3 次）。
 
 ---
 

@@ -25,7 +25,9 @@ function parseFlagMd(content: string): Map<number, string> {
 const unmatchedMiSet = new Set<number>();
 if (statsJsonPath) {
   const stats = JSON.parse(readFileSync(statsJsonPath, 'utf-8'));
-  for (const mi of stats.unmatchedMiList as number[]) unmatchedMiSet.add(mi);
+  for (const s of stats.unmatchedSentences as Array<{ unmatchedMi: number[] }>) {
+    for (const mi of s.unmatchedMi) unmatchedMiSet.add(mi);
+  }
 } else {
   for (const line of readFileSync(flagFullMdPath, 'utf-8').split('\n')) {
     const header = line.match(/^\[\d+:([^\]]+)\]/);

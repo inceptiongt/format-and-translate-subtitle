@@ -12,7 +12,9 @@ const indexedMd = readFileSync(indexedMdPath, 'utf-8');
 // Collect mi indices from unmatched entries and long sentences
 const miSet = new Set<number>();
 
-for (const mi of analy.unmatchedMiList as number[]) miSet.add(mi);
+for (const s of analy.unmatchedSentences as Array<{ miList: number[] }>) {
+  for (const mi of s.miList) miSet.add(mi);
+}
 for (const s of analy.longSentences as Array<{ miList: number[] }>) {
   for (const mi of s.miList) miSet.add(mi);
 }

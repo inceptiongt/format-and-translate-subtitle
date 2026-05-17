@@ -13,7 +13,7 @@ function wordCount(text: string): number {
 const content = readFileSync(flagFullMdPath, 'utf-8');
 
 let totalMi = 0;
-const unmatchedMiList: number[] = [];
+const unmatchedSentences: Array<{ n: number; words: number; text: string; miList: number[]; unmatchedMi: number[] }> = [];
 const longSentences: Array<{ n: number; words: number; text: string; miList: number[] }> = [];
 
 for (const line of content.split('\n')) {
@@ -27,25 +27,34 @@ for (const line of content.split('\n')) {
   const allMiTokens = sources.match(/\+-?\d+/g) ?? [];
   totalMi += allMiTokens.length;
 
-  for (const token of sources.match(/\+-(\d+)/g) ?? []) {
-    unmatchedMiList.push(parseInt(token.slice(2), 10));
+  const wc = wordCount(sentenceText);
+
+  const unmatchedTokens = sources.match(/\+-(\d+)/g) ?? [];
+  if (unmatchedTokens.length > 0) {
+    unmatchedSentences.push({
+      n,
+      words: wc,
+      text: sentenceText,
+      miList: allMiTokens.map(t => parseInt(t.replace(/^\+-?/, ''), 10)),
+      unmatchedMi: unmatchedTokens.map(t => parseInt(t.slice(2), 10)),
+    });
   }
 
-  const wc = wordCount(sentenceText);
   if (wc > 40) {
     const miList = allMiTokens.map(t => parseInt(t.replace(/^\+-?/, ''), 10));
     longSentences.push({ n, words: wc, text: sentenceText, miList });
   }
 }
 
-const matchedMi = totalMi - unmatchedMiList.length;
+const unmatchedMiCount = unmatchedSentences.reduce((s, e) => s + e.unmatchedMi.length, 0);
+const matchedMi = totalMi - unmatchedMiCount;
 const matchedRate = totalMi > 0 ? matchedMi / totalMi : 1;
 
 const stats = {
   totalMi,
-  unmatchedMiCount: unmatchedMiList.length,
+  unmatchedMiCount,
   matchedRate: parseFloat(matchedRate.toFixed(4)),
-  unmatchedMiList,
+  unmatchedSentences,
   longSentencesCount: longSentences.length,
   longSentences,
 };
